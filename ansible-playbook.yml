@@ -108,7 +108,7 @@
     - name: Disable default Apache site
       command: a2dissite 000-default.conf
       args:
-        creates: "/etc/apache2/sites-enabled/000-default.conf"
+        removes: "/etc/apache2/sites-enabled/000-default.conf"
 
     - name: Restart and enable Apache
       systemd:

@@ -6,7 +6,6 @@ Emulates a Brother printer web interface with login functionality
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import os
-import hashlib
 from functools import wraps
 
 app = Flask(__name__)
