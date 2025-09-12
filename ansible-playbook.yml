@@ -46,9 +46,8 @@
 
     - name: Mark repo path as safe for git
       git_config:
-        path: "{{ app_dir }}"
         name: "safe.directory"
-        value: "*"
+        value: "{{ app_dir }}"
 
     - name: Clone repository
       git:
