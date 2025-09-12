@@ -7,6 +7,7 @@
     app_user: "www-data"
     app_dir: "/var/www/{{ app_name }}"
     git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"  # Replace with actual repo
+    hostname: "brother-printer"
     
   tasks:
     - name: Update package cache
@@ -26,6 +27,10 @@
           - git
           - ufw
         state: present
+
+    - name: Set hostname
+      hostname:
+        name: "{{ hostname }}"
 
     - name: Enable Apache modules
       apache2_module:
