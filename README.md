@@ -27,7 +27,7 @@ The flag is hidden in the SMTP credentials:
 
 1. **Clone the repository:**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/jeffaburke/brother-printer-ctf.git
    cd brother-printer-ctf
    ```
 
@@ -48,25 +48,20 @@ The flag is hidden in the SMTP credentials:
 
 ### Production Deployment with Ansible
 
-1. **Prepare your inventory file:**
+1. **Prepare your inventory.ini file:**
    ```ini
-   [ctf-machines]
-   printer-ctf ansible_host=192.168.1.100 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
+   [all]
+   
+   <ctf-box-ip>
    ```
 
-2. **Update the git repository URL in the playbook:**
-   ```yaml
-   # Edit ansible-playbook.yml
-   git_repo: "https://github.com/your-username/brother-printer-ctf.git"
-   ```
-
-3. **Run the Ansible playbook:**
+2. **Run the Ansible playbook:**
    ```bash
    ansible-playbook -i inventory.ini ansible-playbook.yml
    ```
 
 4. **Access the deployed portal:**
-   - Navigate to `http://<server-ip>`
+   - Navigate to `http://<ctf-box-ip>`
    - Login and find the flag in Settings
 
 ## 🏗️ Architecture
@@ -163,31 +158,6 @@ DEFAULT_PASSWORD = "your_password"
 - Create corresponding templates
 - Implement intentional security flaws
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Apache not starting:**
-   ```bash
-   sudo systemctl status apache2
-   sudo journalctl -u apache2
-   ```
-
-2. **WSGI errors:**
-   - Check file permissions
-   - Verify Python virtual environment
-   - Check Apache error logs
-
-3. **Application not loading:**
-   - Verify all dependencies are installed
-   - Check file paths in configuration
-   - Test with standalone Flask first
-
-### Logs Location
-- **Apache Error Log:** `/var/log/apache2/brother-printer-ctf_error.log`
-- **Apache Access Log:** `/var/log/apache2/brother-printer-ctf_access.log`
-- **Application Logs:** Check Apache error log for Python errors
-
 ## 🎓 Educational Value
 
 This CTF machine teaches:
@@ -196,12 +166,6 @@ This CTF machine teaches:
 - **Information Disclosure:** Dangers of exposing sensitive data
 - **Network Security:** Risks of unencrypted web interfaces
 - **Printer Security:** Specific vulnerabilities in network printers
-
-## 📚 Additional Resources
-
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Printer Security Best Practices](https://www.cisa.gov/news-events/news/printer-security-best-practices)
-- [Flask Security Guide](https://flask.palletsprojects.com/en/2.3.x/security/)
 
 ## 🤝 Contributing
 

@@ -2,14 +2,15 @@
 - name: Deploy Brother Printer CTF Portal
   hosts: all
   become: yes
+  # Define variables for easy custom use when final deployment is done
   vars:
     app_name: "brother-printer-ctf"
     app_user: "www-data"
     app_dir: "/var/www/{{ app_name }}"
-    git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"  # Replace with actual repo
+    git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"
     hostname: "brother-printer"
     
-  tasks:
+  tasks: # Update the package cache so there are no errors when trying to install packages
     - name: Update package cache
       apt:
         update_cache: yes
@@ -28,11 +29,11 @@
           - ufw
         state: present
 
-    - name: Set hostname
+    - name: Set hostname # Set this as errors arose when trying to use default box out of OpenStack
       hostname:
         name: "{{ hostname }}"
 
-    - name: Enable Apache modules
+    - name: Enable Apache modules # Install the necessary Apache modules like WSGI so Apache can understand the python application
       apache2_module:
         name: "{{ item }}"
         state: present
@@ -41,7 +42,7 @@
         - wsgi
         - headers
 
-    - name: Create application directory
+    - name: Create application directory # Create the directory for the application with www-data as the owner
       file:
         path: "{{ app_dir }}"
         state: directory
@@ -49,7 +50,7 @@
         group: "{{ app_user }}"
         mode: '0755'
 
-    - name: Mark repo path as safe for git
+    - name: Mark repo path as safe for git # This is needed so git can pull the repository as the root user
       git_config:
         name: "safe.directory"
         value: "{{ app_dir }}"
@@ -61,7 +62,7 @@
         version: main
         force: yes
 
-    - name: Ensure requirements.txt exists
+    - name: Ensure requirements.txt exists # Check if the requirements.txt file exists if not next step will fail. Should be pulled from the repo
       stat:
         path: "{{ app_dir }}/requirements.txt"
       register: requirements_file
@@ -71,7 +72,7 @@
         msg: "requirements.txt not found in repository at {{ app_dir }}"
       when: not requirements_file.stat.exists
 
-    - name: Create virtual environment for application
+    - name: Create virtual environment for application # Create the virtual environment for the application so everything is self-contained and we don't have to worry about getting system python packages.
       command: "python3 -m venv {{ app_dir }}/venv"
       args:
         creates: "{{ app_dir }}/venv"
@@ -82,7 +83,7 @@
         virtualenv: "{{ app_dir }}/venv"
         virtualenv_python: python3
 
-    - name: Copy WSGI entry point from repository
+    - name: Copy WSGI entry point from repository # Copy the WSGI entry point from the repository to the application directory
       copy:
         src: "{{ app_dir }}/wsgi-entry.py"
         dest: "{{ app_dir }}/{{ app_name }}.wsgi"
@@ -91,7 +92,7 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Copy Apache configuration from repository
+    - name: Copy Apache configuration from repository # Copy the Apache configuration from the repository to the application directory
       copy:
         src: "{{ app_dir }}/apache-config.conf"
         dest: "/etc/apache2/sites-available/{{ app_name }}.conf"
@@ -100,23 +101,23 @@
         mode: '0644'
         remote_src: yes
 
-    - name: Enable the new site
+    - name: Enable the new site # Enable the new site so Apache can use it vs the default
       command: a2ensite {{ app_name }}.conf
       args:
         creates: "/etc/apache2/sites-enabled/{{ app_name }}.conf"
 
-    - name: Disable default Apache site
+    - name: Disable default Apache site # Disable the default site so Apache can use the new one and not serve the default page.
       command: a2dissite 000-default.conf
       args:
         removes: "/etc/apache2/sites-enabled/000-default.conf"
 
-    - name: Restart and enable Apache
+    - name: Restart and enable Apache # Restart and enable Apache so it can use the new site and not the default one.
       systemd:
         name: apache2
         state: restarted
         enabled: yes
 
-    - name: Enable UFW firewall
+    - name: Enable UFW firewall # Enable the UFW firewall so we can block all traffic except SSH and HTTP. This will help simplify the attack and defense surface.
       ufw:
         state: enabled
         policy: deny
@@ -133,14 +134,14 @@
         port: "80"
         proto: tcp
 
-    - name: Set proper ownership of application directory
+    - name: Set proper ownership of application directory # Set the ownership of the application directory to the www-data user so the application can write to it.
       file:
         path: "{{ app_dir }}"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
         recurse: yes
 
-    - name: Validate Apache configuration
+    - name: Validate Apache configuration # Validate the Apache configuration so we can make sure it's correct. This is sort of a last check to make sure everything is working as expected.
       command: apache2ctl configtest
       register: apache_config_test
       changed_when: false
@@ -151,7 +152,7 @@
         port: 80
         timeout: 30
 
-    - name: Display deployment information
+    - name: Display deployment information # Display the deployment information so we can see what's been deployed.
       debug:
         msg: |
           Brother Printer CTF Portal has been deployed!
