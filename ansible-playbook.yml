@@ -44,14 +44,18 @@
         group: "{{ app_user }}"
         mode: '0755'
 
+    - name: Mark repo path as safe for git
+      git_config:
+        path: "{{ app_dir }}"
+        name: "safe.directory"
+        value: "*"
+
     - name: Clone repository
       git:
         repo: "{{ git_repo }}"
         dest: "{{ app_dir }}"
         version: main
         force: yes
-
-    # Application code and structure come from the repository
 
     - name: Ensure requirements.txt exists
       stat:
@@ -62,10 +66,6 @@
       fail:
         msg: "requirements.txt not found in repository at {{ app_dir }}"
       when: not requirements_file.stat.exists
-
-    # Templates directory is provided by the repository
-
-    # Static directories are provided by the repository
 
     - name: Create virtual environment for application
       command: "python3 -m venv {{ app_dir }}/venv"
@@ -97,19 +97,19 @@
         remote_src: yes
 
     - name: Enable the new site
-      apache2_site:
-        name: "{{ app_name }}"
-        state: present
+      command: a2ensite {{ app_name }}.conf
+      args:
+        creates: "/etc/apache2/sites-enabled/{{ app_name }}.conf"
 
     - name: Disable default Apache site
-      apache2_site:
-        name: "000-default"
-        state: absent
+      command: a2dissite 000-default.conf
+      args:
+        creates: "/etc/apache2/sites-enabled/000-default.conf"
 
-    - name: Start and enable Apache
+    - name: Restart and enable Apache
       systemd:
         name: apache2
-        state: started
+        state: restarted
         enabled: yes
 
     - name: Enable UFW firewall
@@ -128,27 +128,6 @@
         rule: allow
         port: "80"
         proto: tcp
-
-    # Apache handles the application - no separate systemd service needed
-
-    - name: Create deployment script
-      copy:
-        content: |
-          #!/bin/bash
-          set -euo pipefail
-          echo "Deploying Brother Printer CTF Portal..."
-          cd {{ app_dir }}
-          if [ -d .git ]; then
-            git pull --ff-only origin main || true
-          fi
-          sudo systemctl restart apache2
-          echo "Deployment complete!"
-        dest: "{{ app_dir }}/deploy.sh"
-        owner: "{{ app_user }}"
-        group: "{{ app_user }}"
-        mode: '0755'
-
-    # README comes from the repository
 
     - name: Set proper ownership of application directory
       file:
