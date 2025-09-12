@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog"></i> Settings
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-envelope"></i> SMTP Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>SMTP Account Information:</strong> This account is used for sending scanned documents via email.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>SMTP Username:</strong></label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ smtp_creds.username }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ smtp_creds.username }}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>SMTP Password:</strong></label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="smtpPassword" value="{{ smtp_creds.password }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ smtp_creds.password }}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>SMTP Server:</strong></label>
+                            <input type="text" class="form-control" value="smtp.chernobyl.local" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>SMTP Port:</strong></label>
+                            <input type="text" class="form-control" value="587" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Security:</strong></label>
+                    <input type="text" class="form-control" value="STARTTLS" readonly>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Security Notice:</strong> These credentials are stored in plain text for demonstration purposes. 
+                    In a production environment, they should be encrypted.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt"></i> Security Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Web Access</label>
+                    <select class="form-select" disabled>
+                        <option selected>Enabled</option>
+                        <option>Disabled</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">SNMP</label>
+                    <select class="form-select" disabled>
+                        <option selected>Enabled</option>
+                        <option>Disabled</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Telnet</label>
+                    <select class="form-select" disabled>
+                        <option>Enabled</option>
+                        <option selected>Disabled</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">FTP</label>
+                    <select class="form-select" disabled>
+                        <option>Enabled</option>
+                        <option selected>Disabled</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" disabled>
+                    <i class="fas fa-save"></i> Save Changes
+                </button>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> System Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>Model:</strong></td>
+                        <td>{{ printer_info.model }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Serial:</strong></td>
+                        <td>{{ printer_info.serial }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Firmware:</strong></td>
+                        <td>{{ printer_info.firmware }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>IP Address:</strong></td>
+                        <td>{{ printer_info.ip_address }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const passwordField = document.getElementById('smtpPassword');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Create a temporary alert to show copy success
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        alert.style.top = '20px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `
+            <i class="fas fa-check"></i> Copied to clipboard!
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+        
+        // Auto-remove after 2 seconds
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.parentNode.removeChild(alert);
+            }
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

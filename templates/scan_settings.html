@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Scan Settings - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-scanner"></i> Scan Settings
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog"></i> Scan Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Scan Resolution</label>
+                                <select class="form-select" disabled>
+                                    <option>150 dpi</option>
+                                    <option selected>300 dpi</option>
+                                    <option>600 dpi</option>
+                                    <option>1200 dpi</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Color Mode</label>
+                                <select class="form-select" disabled>
+                                    <option selected>Color</option>
+                                    <option>Grayscale</option>
+                                    <option>Black & White</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">File Format</label>
+                                <select class="form-select" disabled>
+                                    <option selected>PDF</option>
+                                    <option>JPEG</option>
+                                    <option>PNG</option>
+                                    <option>TIFF</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Document Size</label>
+                                <select class="form-select" disabled>
+                                    <option selected>A4</option>
+                                    <option>Letter</option>
+                                    <option>Legal</option>
+                                    <option>Auto Detect</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Scan Destination</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="destination" id="email" checked disabled>
+                            <label class="form-check-label" for="email">
+                                <i class="fas fa-envelope"></i> Email
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="destination" id="ftp" disabled>
+                            <label class="form-check-label" for="ftp">
+                                <i class="fas fa-upload"></i> FTP Server
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="destination" id="network" disabled>
+                            <label class="form-check-label" for="network">
+                                <i class="fas fa-network-wired"></i> Network Folder
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Default Email Address</label>
+                        <input type="email" class="form-control" value="scans@chernobyl.local" readonly>
+                        <div class="form-text">Default email address for scanned documents</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" disabled>
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Recent Scans
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Document</th>
+                                <th>Format</th>
+                                <th>Size</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-01-15 14:25:10</td>
+                                <td>document_001.pdf</td>
+                                <td>PDF</td>
+                                <td>2.3 MB</td>
+                                <td><span class="badge bg-success">Sent</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15 13:45:22</td>
+                                <td>contract_scan.pdf</td>
+                                <td>PDF</td>
+                                <td>1.8 MB</td>
+                                <td><span class="badge bg-success">Sent</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15 12:30:15</td>
+                                <td>invoice_2024.pdf</td>
+                                <td>PDF</td>
+                                <td>945 KB</td>
+                                <td><span class="badge bg-warning">Failed</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-play"></i> Quick Scan
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary" disabled>
+                        <i class="fas fa-scanner"></i> Scan to Email
+                    </button>
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-file-pdf"></i> Scan to PDF
+                    </button>
+                    <button class="btn btn-outline-success" disabled>
+                        <i class="fas fa-image"></i> Scan to JPEG
+                    </button>
+                </div>
+
+                <hr>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Scan Tips:</strong><br>
+                    • Place document face down on scanner<br>
+                    • Ensure document is aligned properly<br>
+                    • Check paper size settings
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-envelope"></i> Email Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">SMTP Server</label>
+                    <input type="text" class="form-control" value="smtp.chernobyl.local" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">SMTP Port</label>
+                    <input type="text" class="form-control" value="587" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Authentication</label>
+                    <input type="text" class="form-control" value="Required" readonly>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <small>SMTP credentials are configured in the main settings page.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Network Settings - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-network-wired"></i> Network Settings
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-ethernet"></i> Network Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Connection Type</label>
+                                <select class="form-select" disabled>
+                                    <option {% if network_config.connection_type == 'Ethernet' %}selected{% endif %}>Ethernet</option>
+                                    <option {% if network_config.connection_type == 'Wireless' %}selected{% endif %}>Wireless</option>
+                                    <option {% if network_config.connection_type == 'USB' %}selected{% endif %}>USB</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">IP Configuration</label>
+                                <select class="form-select" disabled>
+                                    <option {% if network_config.ip_config == 'Static IP' %}selected{% endif %}>Static IP</option>
+                                    <option {% if network_config.ip_config == 'DHCP' %}selected{% endif %}>DHCP</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">IP Address</label>
+                                <input type="text" class="form-control" value="{{ network_config.ip_address }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Subnet Mask</label>
+                                <input type="text" class="form-control" value="{{ network_config.subnet_mask }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Default Gateway</label>
+                                <input type="text" class="form-control" value="{{ network_config.default_gateway }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Primary DNS</label>
+                                <input type="text" class="form-control" value="{{ network_config.primary_dns }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">MAC Address</label>
+                                <input type="text" class="form-control" value="{{ network_config.mac_address }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Hostname</label>
+                                <input type="text" class="form-control" value="{{ network_config.hostname }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" disabled>
+                        <i class="fas fa-save"></i> Save Network Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt"></i> Network Services
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="web" {% if service_status.web_interface %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="web">
+                                <i class="fas fa-globe"></i> Web Interface (HTTP)
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="https" {% if service_status.https %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="https">
+                                <i class="fas fa-lock"></i> Web Interface (HTTPS)
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="snmp" {% if service_status.snmp %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="snmp">
+                                <i class="fas fa-network-wired"></i> SNMP
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="ftp" {% if service_status.ftp %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="ftp">
+                                <i class="fas fa-upload"></i> FTP Server
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="telnet" {% if service_status.telnet %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="telnet">
+                                <i class="fas fa-terminal"></i> Telnet
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="samba" {% if service_status.samba %}checked{% endif %} disabled>
+                            <label class="form-check-label" for="samba">
+                                <i class="fas fa-folder"></i> SMB/CIFS
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Network Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Connection Status:</span>
+                        <span class="badge bg-success">Connected</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Link Speed:</span>
+                        <span>{{ network_config.link_speed }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Signal Strength:</span>
+                        <span>{{ network_config.signal_strength }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Uptime:</span>
+                        <span>{{ printer_info.uptime }}</span>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-sync"></i> Test Connection
+                    </button>
+                    <button class="btn btn-outline-secondary" disabled>
+                        <i class="fas fa-download"></i> Download Config
+                    </button>
+                    <button class="btn btn-outline-warning" disabled>
+                        <i class="fas fa-upload"></i> Upload Config
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Security Notice
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> Several network services are enabled that could pose security risks:
+                </div>
+                
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Web Interface (HTTP)</li>
+                    <li><i class="fas fa-check text-success"></i> SNMP</li>
+                    <li><i class="fas fa-times text-danger"></i> HTTPS (Disabled)</li>
+                    <li><i class="fas fa-times text-danger"></i> FTP (Disabled)</li>
+                    <li><i class="fas fa-times text-danger"></i> Telnet (Disabled)</li>
+                </ul>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <small>Consider disabling unnecessary services and enabling HTTPS for secure access.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

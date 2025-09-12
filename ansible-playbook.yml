@@ -1,0 +1,180 @@
+---
+- name: Deploy Brother Printer CTF Portal
+  hosts: all
+  become: yes
+  vars:
+    app_name: "brother-printer-ctf"
+    app_user: "www-data"
+    app_dir: "/var/www/{{ app_name }}"
+    git_repo: "https://github.com/your-username/brother-printer-ctf.git"  # Replace with actual repo
+    
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - python3-dev
+          - apache2
+          - libapache2-mod-wsgi-py3
+          - git
+          - ufw
+        state: present
+
+    - name: Enable Apache modules
+      apache2_module:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - rewrite
+        - wsgi
+        - headers
+
+    - name: Create application directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Clone repository
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: yes
+
+    # Application code and structure come from the repository
+
+    - name: Ensure requirements.txt exists
+      stat:
+        path: "{{ app_dir }}/requirements.txt"
+      register: requirements_file
+
+    - name: Fail if requirements.txt not found
+      fail:
+        msg: "requirements.txt not found in repository at {{ app_dir }}"
+      when: not requirements_file.stat.exists
+
+    # Templates directory is provided by the repository
+
+    # Static directories are provided by the repository
+
+    - name: Create virtual environment for application
+      command: "python3 -m venv {{ app_dir }}/venv"
+      args:
+        creates: "{{ app_dir }}/venv"
+
+    - name: Install Python dependencies
+      pip:
+        requirements: "{{ app_dir }}/requirements.txt"
+        virtualenv: "{{ app_dir }}/venv"
+        virtualenv_python: python3
+
+    - name: Copy WSGI entry point from repository
+      copy:
+        src: "{{ app_dir }}/wsgi-entry.py"
+        dest: "{{ app_dir }}/{{ app_name }}.wsgi"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+        remote_src: yes
+
+    - name: Copy Apache configuration from repository
+      copy:
+        src: "{{ app_dir }}/apache-config.conf"
+        dest: "/etc/apache2/sites-available/{{ app_name }}.conf"
+        owner: root
+        group: root
+        mode: '0644'
+        remote_src: yes
+
+    - name: Enable the new site
+      apache2_site:
+        name: "{{ app_name }}"
+        state: present
+
+    - name: Disable default Apache site
+      apache2_site:
+        name: "000-default"
+        state: absent
+
+    - name: Start and enable Apache
+      systemd:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Enable UFW firewall
+      ufw:
+        state: enabled
+        policy: deny
+
+    - name: Allow SSH access
+      ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+
+    - name: Allow HTTP access
+      ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    # Apache handles the application - no separate systemd service needed
+
+    - name: Create deployment script
+      copy:
+        content: |
+          #!/bin/bash
+          set -euo pipefail
+          echo "Deploying Brother Printer CTF Portal..."
+          cd {{ app_dir }}
+          if [ -d .git ]; then
+            git pull --ff-only origin main || true
+          fi
+          sudo systemctl restart apache2
+          echo "Deployment complete!"
+        dest: "{{ app_dir }}/deploy.sh"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+
+    # README comes from the repository
+
+    - name: Set proper ownership of application directory
+      file:
+        path: "{{ app_dir }}"
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        recurse: yes
+
+    - name: Validate Apache configuration
+      command: apache2ctl configtest
+      register: apache_config_test
+      changed_when: false
+      failed_when: apache_config_test.rc != 0
+
+    - name: Wait for Apache to be ready
+      wait_for:
+        port: 80
+        timeout: 30
+
+    - name: Display deployment information
+      debug:
+        msg: |
+          Brother Printer CTF Portal has been deployed!
+          Access URL: http://{{ ansible_default_ipv4.address }}
+          Application Directory: {{ app_dir }}
+          Default Credentials: 1234567 / 1234567
+          SMTP Credentials: scans@chernobyl.local / YouFoundMyPass
+          
+          The application is ready to use!

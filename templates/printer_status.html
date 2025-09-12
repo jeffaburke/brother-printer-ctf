@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Printer Status - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-info-circle"></i> Printer Status
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-print"></i> Device Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Model Name:</strong></td>
+                                <td>{{ printer_info.model }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Serial Number:</strong></td>
+                                <td>{{ printer_info.serial }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Firmware Version:</strong></td>
+                                <td>{{ printer_info.firmware }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td><span class="badge bg-success">{{ printer_info.status }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>IP Address:</strong></td>
+                                <td>{{ printer_info.ip_address }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>MAC Address:</strong></td>
+                                <td>{{ printer_info.mac_address }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Network Status:</strong></td>
+                                <td><span class="badge bg-success">Connected</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Uptime:</strong></td>
+                                <td>{{ printer_info.uptime }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tint"></i> Supply Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Black Toner</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-dark" style="width: {{ supply_levels.black_toner }}%">{{ supply_levels.black_toner }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Drum Unit</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-secondary" style="width: {{ supply_levels.drum_unit }}%">{{ supply_levels.drum_unit }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Paper Tray 1</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ supply_levels.paper_tray_1 }}%">{{ supply_levels.paper_tray_1 }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Waste Toner</label>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ supply_levels.waste_toner }}%">{{ supply_levels.waste_toner }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Print Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h3 class="text-primary">{{ "{:,}".format(print_stats.total_pages) }}</h3>
+                    <p class="text-muted">Total Pages Printed</p>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-success">{{ "{:,}".format(print_stats.black_white) }}</h5>
+                        <small class="text-muted">Black & White</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-info">{{ "{:,}".format(print_stats.color) }}</h5>
+                        <small class="text-muted">Color</small>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="mb-2">
+                    <small class="text-muted">This Month:</small>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-primary" style="width: {{ print_stats.this_month }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <small class="text-muted">Last Month:</small>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-secondary" style="width: {{ print_stats.last_month }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Maintenance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-sync"></i> Clean Print Head
+                    </button>
+                    <button class="btn btn-outline-secondary" disabled>
+                        <i class="fas fa-align-center"></i> Align Cartridge
+                    </button>
+                    <button class="btn btn-outline-warning" disabled>
+                        <i class="fas fa-print"></i> Print Test Page
+                    </button>
+                    <button class="btn btn-outline-info" disabled>
+                        <i class="fas fa-cog"></i> Calibrate Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

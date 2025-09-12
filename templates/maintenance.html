@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tools"></i> Maintenance
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog"></i> Maintenance Tasks
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sync fa-2x text-primary mb-3"></i>
+                                <h6>Clean Print Head</h6>
+                                <p class="small text-muted">Clean the print head to improve print quality</p>
+                                <button class="btn btn-outline-primary btn-sm" disabled>
+                                    <i class="fas fa-play"></i> Start Cleaning
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-align-center fa-2x text-success mb-3"></i>
+                                <h6>Align Cartridge</h6>
+                                <p class="small text-muted">Align the print cartridge for better accuracy</p>
+                                <button class="btn btn-outline-success btn-sm" disabled>
+                                    <i class="fas fa-play"></i> Start Alignment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-print fa-2x text-warning mb-3"></i>
+                                <h6>Print Test Page</h6>
+                                <p class="small text-muted">Print a test page to verify functionality</p>
+                                <button class="btn btn-outline-warning btn-sm" disabled>
+                                    <i class="fas fa-play"></i> Print Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <i class="fas fa-scanner fa-2x text-info mb-3"></i>
+                                <h6>Calibrate Scanner</h6>
+                                <p class="small text-muted">Calibrate the scanner for optimal performance</p>
+                                <button class="btn btn-outline-info btn-sm" disabled>
+                                    <i class="fas fa-play"></i> Start Calibration
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Maintenance History
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Task</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-01-15 10:30:15</td>
+                                <td>Print Head Cleaning</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                                <td>Print quality improved</td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-14 16:45:22</td>
+                                <td>Cartridge Alignment</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                                <td>Alignment successful</td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-13 09:15:30</td>
+                                <td>Scanner Calibration</td>
+                                <td><span class="badge bg-warning">Failed</span></td>
+                                <td>Document not detected</td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-12 14:20:45</td>
+                                <td>Test Page Print</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                                <td>All colors printed correctly</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> System Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td><strong>Model:</strong></td>
+                        <td>{{ printer_info.model }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Serial:</strong></td>
+                        <td>{{ printer_info.serial }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Firmware:</strong></td>
+                        <td>{{ printer_info.firmware }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Uptime:</strong></td>
+                        <td>{{ printer_info.uptime }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Pages:</strong></td>
+                        <td>{{ "{:,}".format(print_stats.total_pages) }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Last Service:</strong></td>
+                        <td>2024-01-10</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Alerts & Warnings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Regular Maintenance Due</strong><br>
+                    <small>Next scheduled maintenance: 2024-02-15</small>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Toner Level Low</strong><br>
+                    <small>Black toner is at 15% capacity</small>
+                </div>
+
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>All Systems Normal</strong><br>
+                    <small>No critical issues detected</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-download"></i> Firmware & Updates
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Current Firmware</label>
+                    <input type="text" class="form-control" value="1.15" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Latest Available</label>
+                    <input type="text" class="form-control" value="1.16" readonly>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-download"></i> Check for Updates
+                    </button>
+                    <button class="btn btn-outline-warning" disabled>
+                        <i class="fas fa-upload"></i> Upload Firmware
+                    </button>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <small><strong>Warning:</strong> Firmware updates should only be performed during maintenance windows.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

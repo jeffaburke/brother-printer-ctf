@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Brother Printer Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+            <small class="text-muted">Welcome, {{ username }}</small>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">Printer Status</h4>
+                        <p class="card-text">{{ printer_info.status }}</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-print fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">Paper Status</h4>
+                        <p class="card-text">{{ supply_levels.paper_tray_1 }}%</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">Toner Level</h4>
+                        <p class="card-text">{{ supply_levels.black_toner }}%</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-tint fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">Network</h4>
+                        <p class="card-text">Connected</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-wifi fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Action</th>
+                                <th>User</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2024-01-15 14:30:25</td>
+                                <td>Print Job</td>
+                                <td>admin</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15 14:25:10</td>
+                                <td>Scan Document</td>
+                                <td>admin</td>
+                                <td><span class="badge bg-success">Completed</span></td>
+                            </tr>
+                            <tr>
+                                <td>2024-01-15 14:20:45</td>
+                                <td>Settings Change</td>
+                                <td>admin</td>
+                                <td><span class="badge bg-warning">Modified</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cog"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('printer_status') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-info-circle"></i> View Status
+                    </a>
+                    <a href="{{ url_for('scan_settings') }}" class="btn btn-outline-success">
+                        <i class="fas fa-scanner"></i> Scan Settings
+                    </a>
+                    <a href="{{ url_for('network_settings') }}" class="btn btn-outline-info">
+                        <i class="fas fa-network-wired"></i> Network Config
+                    </a>
+                    <a href="{{ url_for('settings') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cog"></i> All Settings
+                    </a>
+                    {% if session.user_type == 'admin' %}
+                    <a href="{{ url_for('admin') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-shield-alt"></i> Admin Panel
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
