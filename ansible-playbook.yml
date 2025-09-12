@@ -6,7 +6,7 @@
     app_name: "brother-printer-ctf"
     app_user: "www-data"
     app_dir: "/var/www/{{ app_name }}"
-    git_repo: "https://github.com/your-username/brother-printer-ctf.git"  # Replace with actual repo
+    git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"  # Replace with actual repo
     
   tasks:
     - name: Update package cache
