@@ -167,7 +167,8 @@ def network_settings():
     """Network settings page (non-functional)"""
     return render_template('network_settings.html',
                          network_config=NETWORK_CONFIG,
-                         service_status=SERVICE_STATUS)
+                         service_status=SERVICE_STATUS,
+                         printer_info=PRINTER_INFO)
 
 @app.route('/maintenance')
 @login_required
