@@ -31,17 +31,23 @@ The flag is hidden in the SMTP credentials:
    cd brother-printer-ctf
    ```
 
-2. **Install dependencies:**
+2. **Start the venv:**
+   ```bash
+   python -m venv venv
+   source ./venv/bin/activate
+   ```
+
+3. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Run the application:**
+4. **Run the application:**
    ```bash
    python app.py
    ```
 
-4. **Access the portal:**
+5. **Access the portal:**
    - Open your browser to `http://localhost:5000`
    - Login with credentials: `1234567` / `1234567`
    - Navigate to Settings to find the flag
