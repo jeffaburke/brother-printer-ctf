@@ -128,6 +128,108 @@
             </div>
         </div>
 
+        {% if is_logged_in %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-key"></i> Password Management
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="togglePasswordChange()">
+                        <i class="fas fa-edit"></i> Change Admin Password
+                    </button>
+                </div>
+                
+                <div id="passwordChangeForm" style="display: none;">
+                    <form method="POST" action="{{ url_for('change_password') }}">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" name="current_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="new_password" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" name="confirm_password" required minlength="4">
+                        </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-save"></i> Change Password
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="togglePasswordChange()">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shield-alt"></i> Access Control
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Anonymous Access</label>
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">
+                            {% if anonymous_access %}
+                                <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                                <span class="badge bg-danger">Disabled</span>
+                            {% endif %}
+                        </span>
+                        <form method="POST" action="{{ url_for('toggle_anonymous_access') }}" class="d-inline">
+                            {% if anonymous_access %}
+                                <input type="hidden" name="action" value="disable">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-lock"></i> Disable Anonymous Access
+                                </button>
+                            {% else %}
+                                <input type="hidden" name="action" value="enable">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-unlock"></i> Enable Anonymous Access
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                    <small class="text-muted">
+                        {% if anonymous_access %}
+                            Users can currently view settings without logging in.
+                        {% else %}
+                            Users must log in to view any settings.
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Anonymous Access
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Anonymous Access Enabled:</strong> You are currently viewing these settings without logging in. 
+                    To modify security settings or change passwords, please log in as an administrator.
+                </div>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Login as Administrator
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
         <div class="card mt-3">
             <div class="card-header">
                 <h5 class="card-title mb-0">
@@ -193,6 +295,17 @@ function copyToClipboard(text) {
             }
         }, 2000);
     });
+}
+
+function togglePasswordChange() {
+    const form = document.getElementById('passwordChangeForm');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+        // Clear form fields when hiding
+        form.querySelectorAll('input').forEach(input => input.value = '');
+    }
 }
 </script>
 {% endblock %}

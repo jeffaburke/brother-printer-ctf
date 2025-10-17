@@ -27,7 +27,71 @@
           - libapache2-mod-wsgi-py3
           - git
           - ufw
+          - cups
+          - cups-client
+          - cups-daemon
+          - cups-common
+          - cups-core-drivers
+          - cups-filters
+          - cups-filters-core-drivers
+          - cups-ipp-utils
+          - cups-ppdc
+          - cups-server-common
+          - libcups2
+          - libcups2-dev
+          - libcupscgi1
+          - libcupsimage2
+          - libcupsmime1
+          - libcupsppdc1
+          - printer-driver-all
+          - cups-pdf
+          - build-essential
+          - wget
+          - curl
         state: present
+
+    - name: Download CUPS 2.4.2 source
+      get_url:
+        url: "https://github.com/OpenPrinting/cups/releases/download/v2.4.2/cups-2.4.2-source.tar.gz"
+        dest: "/tmp/cups-2.4.2-source.tar.gz"
+        mode: '0644'
+
+    - name: Extract CUPS 2.4.2 source
+      unarchive:
+        src: "/tmp/cups-2.4.2-source.tar.gz"
+        dest: "/tmp/"
+        remote_src: yes
+
+    - name: Configure CUPS 2.4.2 build
+      command: ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --with-systemd --enable-avahi --enable-dbus --enable-ssl --enable-threads --enable-64bit
+      args:
+        chdir: "/tmp/cups-2.4.2"
+      become: yes
+
+    - name: Build CUPS 2.4.2
+      make:
+        chdir: "/tmp/cups-2.4.2"
+      become: yes
+
+    - name: Install CUPS 2.4.2
+      make:
+        chdir: "/tmp/cups-2.4.2"
+        target: install
+      become: yes
+
+    - name: Enable and start CUPS service
+      systemd:
+        name: cups
+        state: started
+        enabled: yes
+
+    - name: Clean up CUPS source files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - "/tmp/cups-2.4.2-source.tar.gz"
+        - "/tmp/cups-2.4.2"
 
     - name: Set hostname # Set this as errors arose when trying to use default box out of OpenStack
       hostname:

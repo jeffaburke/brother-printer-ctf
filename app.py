@@ -15,6 +15,13 @@ app.secret_key = 'brother_printer_secret_key_2024'
 DEFAULT_USERNAME = "1234567"
 DEFAULT_PASSWORD = "1234567"
 
+# Current credentials (can be changed)
+CURRENT_USERNAME = DEFAULT_USERNAME
+CURRENT_PASSWORD = DEFAULT_PASSWORD
+
+# Anonymous access control
+ANONYMOUS_ACCESS_ENABLED = True
+
 # SMTP credentials (the flag/secret)
 SMTP_CREDENTIALS = {
     "username": "scans@chernobyl.local",
@@ -77,7 +84,7 @@ SERVICE_STATUS = {
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'logged_in' not in session:
+        if not ANONYMOUS_ACCESS_ENABLED and 'logged_in' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -103,7 +110,7 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
         
-        if username == DEFAULT_USERNAME and password == DEFAULT_PASSWORD:
+        if username == CURRENT_USERNAME and password == CURRENT_PASSWORD:
             session['logged_in'] = True
             session['username'] = username
             session['user_type'] = 'admin'  # Default user has admin access
@@ -129,7 +136,8 @@ def dashboard():
                          username=session.get('username'),
                          printer_info=PRINTER_INFO,
                          supply_levels=SUPPLY_LEVELS,
-                         print_stats=PRINT_STATS)
+                         print_stats=PRINT_STATS,
+                         is_logged_in='logged_in' in session)
 
 @app.route('/settings')
 @login_required
@@ -137,7 +145,9 @@ def settings():
     """Settings page with SMTP credentials"""
     return render_template('settings.html', 
                          smtp_creds=SMTP_CREDENTIALS,
-                         printer_info=PRINTER_INFO)
+                         printer_info=PRINTER_INFO,
+                         anonymous_access=ANONYMOUS_ACCESS_ENABLED,
+                         is_logged_in='logged_in' in session)
 
 @app.route('/admin')
 @admin_required
@@ -152,13 +162,15 @@ def printer_status():
     return render_template('printer_status.html',
                          printer_info=PRINTER_INFO,
                          supply_levels=SUPPLY_LEVELS,
-                         print_stats=PRINT_STATS)
+                         print_stats=PRINT_STATS,
+                         is_logged_in='logged_in' in session)
 
 @app.route('/scan_settings')
 @login_required
 def scan_settings():
     """Scan settings page (non-functional)"""
-    return render_template('scan_settings.html')
+    return render_template('scan_settings.html',
+                         is_logged_in='logged_in' in session)
 
 @app.route('/network_settings')
 @login_required
@@ -167,7 +179,8 @@ def network_settings():
     return render_template('network_settings.html',
                          network_config=NETWORK_CONFIG,
                          service_status=SERVICE_STATUS,
-                         printer_info=PRINTER_INFO)
+                         printer_info=PRINTER_INFO,
+                         is_logged_in='logged_in' in session)
 
 @app.route('/maintenance')
 @login_required
@@ -175,7 +188,54 @@ def maintenance():
     """Maintenance page (non-functional)"""
     return render_template('maintenance.html',
                          printer_info=PRINTER_INFO,
-                         print_stats=PRINT_STATS)
+                         print_stats=PRINT_STATS,
+                         is_logged_in='logged_in' in session)
+
+@app.route('/change_password', methods=['POST'])
+@admin_required
+def change_password():
+    """Change admin password"""
+    global CURRENT_PASSWORD
+    
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    # Validate current password
+    if current_password != CURRENT_PASSWORD:
+        flash('Current password is incorrect', 'error')
+        return redirect(url_for('settings'))
+    
+    # Validate new password
+    if not new_password or len(new_password) < 4:
+        flash('New password must be at least 4 characters long', 'error')
+        return redirect(url_for('settings'))
+    
+    # Validate password confirmation
+    if new_password != confirm_password:
+        flash('New passwords do not match', 'error')
+        return redirect(url_for('settings'))
+    
+    # Update password
+    CURRENT_PASSWORD = new_password
+    flash('Password changed successfully!', 'success')
+    return redirect(url_for('settings'))
+
+@app.route('/toggle_anonymous_access', methods=['POST'])
+@admin_required
+def toggle_anonymous_access():
+    """Toggle anonymous access setting"""
+    global ANONYMOUS_ACCESS_ENABLED
+    
+    action = request.form.get('action')
+    if action == 'disable':
+        ANONYMOUS_ACCESS_ENABLED = False
+        flash('Anonymous access has been disabled. Login required for all pages.', 'success')
+    elif action == 'enable':
+        ANONYMOUS_ACCESS_ENABLED = True
+        flash('Anonymous access has been enabled. Users can view settings without login.', 'success')
+    
+    return redirect(url_for('settings'))
 
 @app.route('/api/printer_info')
 @login_required
