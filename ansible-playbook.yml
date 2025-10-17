@@ -34,18 +34,21 @@
           - devscripts
         state: present
 
-    - name: Install vulnerable CUPS components from source
+    - name: Remove conflicting system CUPS components
       apt:
         name:
-          - cups=2.4.2-3+deb12u9
-          - cups-client=2.4.2-3+deb12u9
-          - cups-daemon=2.4.2-3+deb12u9
-          - cups-common=2.4.2-3+deb12u9
-          - cups-core-drivers=2.4.2-3+deb12u9
-          - cups-ipp-utils=2.4.2-3+deb12u9
-          - cups-ppdc=2.4.2-3+deb12u9
-          - cups-server-common=2.4.2-3+deb12u9
-          - libcups2=2.4.2-3+deb12u9
+          - libcupsfilters1
+          - libcupsfilters-dev
+          - libppd2
+          - libppd-dev
+          - cups-filters
+          - cups-browsed
+        state: absent
+        purge: yes
+
+    - name: Install CUPS development libraries only (no system libcupsfilters)
+      apt:
+        name:
           - libcups2-dev=2.4.2-3+deb12u9
           - libcupsimage2=2.4.2-3+deb12u9
           - printer-driver-all
@@ -54,7 +57,37 @@
         allow_downgrade: yes
         force: yes
 
-    - name: Ensure build deps are installed for vulnerable CUPS components
+    - name: Enable source repositories for build dependencies
+      shell: |
+        if ! grep -q "deb-src.*bookworm" /etc/apt/sources.list; then
+          echo "deb-src http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list
+          echo "deb-src http://deb.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list
+          echo "deb-src http://security.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list
+        fi
+
+    - name: Update package cache after adding source repositories
+      apt:
+        update_cache: yes
+
+    - name: Check available source packages
+      shell: |
+        apt-cache search --names-only "^libcupsfilters" | head -5
+        apt-cache search --names-only "^libppd" | head -5
+        apt-cache search --names-only "^cups-filters" | head -5
+        apt-cache search --names-only "^cups-browsed" | head -5
+      register: available_packages
+
+    - name: Display available packages
+      debug:
+        var: available_packages.stdout_lines
+
+    - name: Install build dependencies for available CUPS components
+      shell: |
+        apt build-dep -y cups-filters cups-browsed || true
+        apt build-dep -y libcupsfilters1 || true
+        apt build-dep -y libppd2 || true
+
+    - name: Install additional build tools
       apt:
         name:
           - build-essential
@@ -62,11 +95,6 @@
           - automake
           - libtool
           - pkg-config
-          - libssl-dev
-          - libcups2-dev
-          - libxml2-dev
-          - libdbus-1-dev
-          - libpam0g-dev
           - git
           - wget
         state: present
@@ -76,6 +104,27 @@
         path: /usr/local/src/cups-build
         state: directory
         mode: '0755'
+
+    - name: Download libcupsfilters tarball
+      get_url:
+        url: "https://github.com/OpenPrinting/libcupsfilters/archive/refs/tags/2.0.0.tar.gz"
+        dest: /usr/local/src/cups-build/libcupsfilters.tar.gz
+        mode: '0644'
+
+    - name: Extract libcupsfilters
+      unarchive:
+        src: /usr/local/src/cups-build/libcupsfilters.tar.gz
+        dest: /usr/local/src/cups-build
+        remote_src: yes
+
+    - name: Build and install libcupsfilters
+      shell: |
+        set -e
+        cd /usr/local/src/cups-build/libcupsfilters-*
+        ./autogen.sh || true
+        ./configure --prefix=/usr
+        make -j"$(nproc)"
+        make install
 
     - name: Download libppd tarball
       get_url:
@@ -98,27 +147,6 @@
         make -j"$(nproc)"
         make install
 
-    - name: Download libcupsfilters tarball
-      get_url:
-        url: "https://github.com/OpenPrinting/libcupsfilters/archive/refs/tags/2.1b1.tar.gz"
-        dest: /usr/local/src/cups-build/libcupsfilters.tar.gz
-        mode: '0644'
-
-    - name: Extract libcupsfilters
-      unarchive:
-        src: /usr/local/src/cups-build/libcupsfilters.tar.gz
-        dest: /usr/local/src/cups-build
-        remote_src: yes
-
-    - name: Build and install libcupsfilters
-      shell: |
-        set -e
-        cd /usr/local/src/cups-build/libcupsfilters-*
-        ./autogen.sh || true
-        ./configure --prefix=/usr
-        make -j"$(nproc)"
-        make install
-
     - name: Download cups-filters tarball
       get_url:
         url: "https://github.com/OpenPrinting/cups-filters/releases/download/2.0.1/cups-filters-2.0.1.tar.xz"
@@ -130,6 +158,32 @@
         src: /usr/local/src/cups-build/cups-filters.tar.xz
         dest: /usr/local/src/cups-build
         remote_src: yes
+
+    - name: Debug libcupsfilters version and symbols
+      shell: |
+        echo "=== Checking libcupsfilters version ==="
+        pkg-config --modversion libcupsfilters || echo "libcupsfilters not found in pkg-config"
+        echo "=== Checking PKG_CONFIG_PATH ==="
+        echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
+        echo "=== Checking which libcupsfilters pkg-config is using ==="
+        pkg-config --variable=prefix libcupsfilters || echo "No prefix found"
+        pkg-config --variable=libdir libcupsfilters || echo "No libdir found"
+        echo "=== Checking installed libcupsfilters libraries ==="
+        find /usr/lib* -name "*cupsfilters*" -type f 2>/dev/null || echo "No libcupsfilters libraries found"
+        echo "=== Checking for cfIEEE1284GetDeviceID symbol in each library ==="
+        for lib in /usr/lib*/libcupsfilters.so*; do
+          echo "Checking $lib:"
+          nm -D "$lib" 2>/dev/null | grep cfIEEE1284GetDeviceID || echo "  Not found in $lib"
+        done
+        echo "=== Checking libcupsfilters headers ==="
+        find /usr/include -name "*cupsfilters*" -type f 2>/dev/null || echo "No libcupsfilters headers found"
+        echo "=== Checking ldconfig cache ==="
+        ldconfig -p | grep cupsfilters || echo "No cupsfilters in ldconfig cache"
+      register: debug_output
+
+    - name: Display debug information
+      debug:
+        var: debug_output.stdout_lines
 
     - name: Build and install cups-filters
       shell: |
@@ -174,19 +228,81 @@
         dest: /etc/apt/preferences.d/cups-vulnerable
         mode: '0644'
 
+    - name: Install CUPS server components after building vulnerable libraries
+      apt:
+        name:
+          - cups=2.4.2-3+deb12u9
+          - cups-client=2.4.2-3+deb12u9
+          - cups-daemon=2.4.2-3+deb12u9
+          - cups-common=2.4.2-3+deb12u9
+          - cups-core-drivers=2.4.2-3+deb12u9
+          - cups-ipp-utils=2.4.2-3+deb12u9
+          - cups-ppdc=2.4.2-3+deb12u9
+          - cups-server-common=2.4.2-3+deb12u9
+          - libcups2=2.4.2-3+deb12u9
+        state: present
+        allow_downgrade: yes
+        force: yes
+
     - name: Enable and start CUPS service
       systemd:
         name: cups
         state: started
         enabled: yes
 
-    - name: Ensure cups-browsed service is disabled (so it does not run during setup)
+    - name: Enable and start cups-browsed service (vulnerable version)
       systemd:
         name: cups-browsed
-        state: stopped
-        enabled: no
-        masked: yes
+        state: started
+        enabled: yes
+        daemon_reload: yes
       ignore_errors: yes
+
+    - name: Verify vulnerable CUPS components are running
+      shell: |
+        echo "=== CUPS Version ==="
+        cups-config --version || echo "cups-config not found"
+        echo "=== Library Versions ==="
+        pkg-config --modversion libcupsfilters || echo "libcupsfilters not found in pkg-config"
+        pkg-config --modversion libppd || echo "libppd not found in pkg-config"
+        echo "=== Installed Packages ==="
+        dpkg -l | grep -E "(cups|libcupsfilters|libppd)" || echo "No matching packages found"
+        echo "=== Library Files ==="
+        find /usr/lib* -name "*cupsfilters*" -o -name "*libppd*" 2>/dev/null || echo "No library files found"
+        echo "=== Running Processes ==="
+        ps aux | grep -E "(cupsd|cups-browsed)" | grep -v grep || echo "No CUPS processes running"
+        echo "=== Library Dependencies ==="
+        if [ -f /usr/sbin/cupsd ]; then
+          echo "CUPS daemon dependencies:"
+          ldd /usr/sbin/cupsd | grep -E "(cupsfilters|libppd)" || echo "No vulnerable libraries linked"
+        fi
+        if [ -f /usr/sbin/cups-browsed ]; then
+          echo "cups-browsed dependencies:"
+          ldd /usr/sbin/cups-browsed | grep -E "(cupsfilters|libppd)" || echo "No vulnerable libraries linked"
+        fi
+      register: version_check
+
+    - name: Display version verification results
+      debug:
+        var: version_check.stdout_lines
+
+    - name: Fix library path conflicts
+      shell: |
+        # Remove system library versions completely
+        rm -f /usr/lib/x86_64-linux-gnu/libcupsfilters.so*
+        rm -f /usr/lib/x86_64-linux-gnu/libppd.so*
+        rm -f /usr/lib/x86_64-linux-gnu/pkgconfig/libcupsfilters.pc
+        rm -f /usr/lib/x86_64-linux-gnu/pkgconfig/libppd.pc
+        
+        # Update ldconfig to use our libraries
+        ldconfig
+        
+        # Remove conflicting packages completely
+        apt-get remove --purge -y libcupsfilters1 cups-filters || true
+        
+        # Restart CUPS services to use our libraries
+        systemctl restart cups
+        systemctl restart cups-browsed
 
     - name: Enable Apache modules # Install the necessary Apache modules like WSGI so Apache can understand the python application
       apache2_module:
