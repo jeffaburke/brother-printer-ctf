@@ -34,13 +34,7 @@
           - devscripts
         state: present
 
-    - name: Add Debian security repository for vulnerable packages
-      apt_repository:
-        repo: "deb http://security.debian.org/debian-security bookworm-security main"
-        state: present
-        update_cache: yes
-
-    - name: Install vulnerable CUPS components
+    - name: Install vulnerable CUPS components from source
       apt:
         name:
           - cups=2.4.2-3+deb12u9
@@ -48,30 +42,135 @@
           - cups-daemon=2.4.2-3+deb12u9
           - cups-common=2.4.2-3+deb12u9
           - cups-core-drivers=2.4.2-3+deb12u9
-          # - cups-filters=2.0.1-3
-          # - cups-filters-core-drivers=2.0.1-3
-          # - cups-ipp-utils=2.4.2-3+deb12u9
-          # - cups-ppdc=2.4.2-3+deb12u9
-          # - cups-server-common=2.4.2-3+deb12u9
-          # - libcups2=2.4.2-3+deb12u9
-          # - libcups2-dev=2.4.2-3+deb12u9
-          # - libcupscgi1=2.4.2-3+deb12u9
-          # - libcupsimage2=2.4.2-3+deb12u9
-          # - libcupsmime1=2.4.2-3+deb12u9
-          # - libcupsppdc1=2.4.2-3+deb12u9
-          # - libcupsfilters1=2.0.1-3
-          # - libcupsfilters-dev=2.0.1-3
-          # - libppd2=2.1b1-1
-          # - libppd-dev=2.1b1-1
-          # - cups-browsed=2.0.1-3
-          # - foomatic-db-engine=4.0.14-2
-          # - foomatic-db=20221201-1
-          # - foomatic-filters=4.0.14-2
+          - cups-ipp-utils=2.4.2-3+deb12u9
+          - cups-ppdc=2.4.2-3+deb12u9
+          - cups-server-common=2.4.2-3+deb12u9
+          - libcups2=2.4.2-3+deb12u9
+          - libcups2-dev=2.4.2-3+deb12u9
+          - libcupscgi1=2.4.2-3+deb12u9
+          - libcupsimage2=2.4.2-3+deb12u9
+          - libcupsmime1=2.4.2-3+deb12u9
+          - libcupsppdc1=2.4.2-3+deb12u9
           - printer-driver-all
           - cups-pdf
         state: present
         allow_downgrade: yes
         force: yes
+
+    - name: Ensure build deps are installed for vulnerable CUPS components
+      apt:
+        name:
+          - build-essential
+          - autoconf
+          - automake
+          - libtool
+          - pkg-config
+          - libssl-dev
+          - libcups2-dev
+          - libxml2-dev
+          - libdbus-1-dev
+          - libpam0g-dev
+          - git
+          - wget
+        state: present
+
+    - name: Create build dir for vulnerable CUPS components
+      file:
+        path: /usr/local/src/cups-build
+        state: directory
+        mode: '0755'
+
+    - name: Download libppd tarball
+      get_url:
+        url: "https://github.com/OpenPrinting/libppd/releases/download/2.1.0/libppd-2.1.0.tar.xz"
+        dest: /usr/local/src/cups-build/libppd.tar.xz
+        mode: '0644'
+
+    - name: Extract libppd
+      unarchive:
+        src: /usr/local/src/cups-build/libppd.tar.xz
+        dest: /usr/local/src/cups-build
+        remote_src: yes
+
+    - name: Build and install libppd
+      shell: |
+        set -e
+        cd /usr/local/src/cups-build/libppd-*
+        ./autogen.sh || true
+        ./configure --prefix=/usr
+        make -j"$(nproc)"
+        make install
+      args:
+        warn: false
+
+    - name: Download libcupsfilters tarball
+      get_url:
+        url: "https://github.com/OpenPrinting/libcupsfilters/archive/refs/tags/2.1b1.tar.gz"
+        dest: /usr/local/src/cups-build/libcupsfilters.tar.gz
+        mode: '0644'
+
+    - name: Extract libcupsfilters
+      unarchive:
+        src: /usr/local/src/cups-build/libcupsfilters.tar.gz
+        dest: /usr/local/src/cups-build
+        remote_src: yes
+
+    - name: Build and install libcupsfilters
+      shell: |
+        set -e
+        cd /usr/local/src/cups-build/libcupsfilters-*
+        ./autogen.sh || true
+        ./configure --prefix=/usr
+        make -j"$(nproc)"
+        make install
+      args:
+        warn: false
+
+    - name: Download cups-filters tarball
+      get_url:
+        url: "https://github.com/OpenPrinting/cups-filters/releases/download/2.0.1/cups-filters-2.0.1.tar.xz"
+        dest: /usr/local/src/cups-build/cups-filters.tar.xz
+        mode: '0644'
+
+    - name: Extract cups-filters
+      unarchive:
+        src: /usr/local/src/cups-build/cups-filters.tar.xz
+        dest: /usr/local/src/cups-build
+        remote_src: yes
+
+    - name: Build and install cups-filters
+      shell: |
+        set -e
+        cd /usr/local/src/cups-build/cups-filters-*
+        ./autogen.sh || true
+        ./configure --prefix=/usr
+        make -j"$(nproc)"
+        make install
+      args:
+        warn: false
+
+    - name: Download cups-browsed tarball
+      get_url:
+        url: "https://github.com/OpenPrinting/cups-browsed/archive/refs/tags/2.0.1.tar.gz"
+        dest: /usr/local/src/cups-build/cups-browsed.tar.gz
+        mode: '0644'
+
+    - name: Extract cups-browsed
+      unarchive:
+        src: /usr/local/src/cups-build/cups-browsed.tar.gz
+        dest: /usr/local/src/cups-build
+        remote_src: yes
+
+    - name: Build and install cups-browsed
+      shell: |
+        set -e
+        cd /usr/local/src/cups-build/cups-browsed-*
+        ./autogen.sh || true
+        ./configure --prefix=/usr
+        make -j"$(nproc)"
+        make install
+      args:
+        warn: false
 
     - name: Pin vulnerable CUPS packages to prevent updates
       copy:
@@ -80,12 +179,8 @@
           Pin: version 2.4.2-3+deb12u9
           Pin-Priority: 1001
           
-          Package: cups-filters cups-filters-core-drivers libcupsfilters1 libcupsfilters-dev cups-browsed
-          Pin: version 2.0.1-3
-          Pin-Priority: 1001
-          
-          Package: libppd2 libppd-dev
-          Pin: version 2.1b1-1
+          Package: cups-browsed libcupsfilters libppd cups-filters
+          Pin: release *
           Pin-Priority: 1001
         dest: /etc/apt/preferences.d/cups-vulnerable
         mode: '0644'
@@ -96,11 +191,13 @@
         state: started
         enabled: yes
 
-    - name: Enable and start cups-browsed service
+    - name: Ensure cups-browsed service is disabled (so it does not run during setup)
       systemd:
         name: cups-browsed
-        state: started
-        enabled: yes
+        state: stopped
+        enabled: no
+        masked: yes
+      ignore_errors: yes
 
     - name: Enable Apache modules # Install the necessary Apache modules like WSGI so Apache can understand the python application
       apache2_module:
