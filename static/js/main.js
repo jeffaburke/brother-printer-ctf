@@ -18,20 +18,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 5000);
 
-    // Add loading states to buttons
-    var buttons = document.querySelectorAll('button[type="submit"]');
-    buttons.forEach(function(button) {
-        button.addEventListener('click', function() {
-            if (!button.disabled) {
-                var originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                button.disabled = true;
+    // Add loading states to forms on submit
+    var forms = document.querySelectorAll('form');
+    forms.forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            var submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton && !submitButton.disabled) {
+                var originalText = submitButton.innerHTML;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                submitButton.disabled = true;
                 
-                // Re-enable after 2 seconds (simulate processing)
+                // Re-enable after 5 seconds (in case of errors)
                 setTimeout(function() {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
-                }, 2000);
+                    submitButton.innerHTML = originalText;
+                    submitButton.disabled = false;
+                }, 5000);
             }
         });
     });

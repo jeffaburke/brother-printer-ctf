@@ -11,7 +11,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+            <a class="navbar-brand" href="{{ url_for('settings') }}">
                 <i class="fas fa-print"></i> Brother Printer Portal
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -19,6 +19,11 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('settings') }}">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-home"></i> Dashboard
@@ -42,11 +47,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('maintenance') }}">
                             <i class="fas fa-tools"></i> Maintenance
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('settings') }}">
-                            <i class="fas fa-cog"></i> Settings
                         </a>
                     </li>
                     {% if session.user_type == 'admin' %}

@@ -8,7 +8,6 @@
     app_user: "www-data"
     app_dir: "/var/www/{{ app_name }}"
     git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"
-    hostname: "brother-printer"
     
   tasks: # Update the package cache so there are no errors when trying to install packages
     - name: Update package cache
@@ -103,10 +102,6 @@
         state: started
         enabled: yes
 
-    - name: Set hostname # Set this as errors arose when trying to use default box out of OpenStack
-      hostname:
-        name: "{{ hostname }}"
-
     - name: Enable Apache modules # Install the necessary Apache modules like WSGI so Apache can understand the python application
       apache2_module:
         name: "{{ item }}"
@@ -133,7 +128,7 @@
       git:
         repo: "{{ git_repo }}"
         dest: "{{ app_dir }}"
-        version: main
+        version: rce
         force: yes
 
     - name: Ensure requirements.txt exists # Check if the requirements.txt file exists if not next step will fail. Should be pulled from the repo
