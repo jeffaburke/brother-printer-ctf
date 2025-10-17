@@ -47,10 +47,7 @@
           - cups-server-common=2.4.2-3+deb12u9
           - libcups2=2.4.2-3+deb12u9
           - libcups2-dev=2.4.2-3+deb12u9
-          - libcupscgi1=2.4.2-3+deb12u9
           - libcupsimage2=2.4.2-3+deb12u9
-          - libcupsmime1=2.4.2-3+deb12u9
-          - libcupsppdc1=2.4.2-3+deb12u9
           - printer-driver-all
           - cups-pdf
         state: present
@@ -100,8 +97,6 @@
         ./configure --prefix=/usr
         make -j"$(nproc)"
         make install
-      args:
-        warn: false
 
     - name: Download libcupsfilters tarball
       get_url:
@@ -123,8 +118,6 @@
         ./configure --prefix=/usr
         make -j"$(nproc)"
         make install
-      args:
-        warn: false
 
     - name: Download cups-filters tarball
       get_url:
@@ -146,8 +139,6 @@
         ./configure --prefix=/usr
         make -j"$(nproc)"
         make install
-      args:
-        warn: false
 
     - name: Download cups-browsed tarball
       get_url:
@@ -169,13 +160,11 @@
         ./configure --prefix=/usr
         make -j"$(nproc)"
         make install
-      args:
-        warn: false
 
     - name: Pin vulnerable CUPS packages to prevent updates
       copy:
         content: |
-          Package: cups cups-client cups-daemon cups-common cups-core-drivers cups-ipp-utils cups-ppdc cups-server-common libcups2 libcups2-dev libcupscgi1 libcupsimage2 libcupsmime1 libcupsppdc1
+          Package: cups cups-client cups-daemon cups-common cups-core-drivers cups-ipp-utils cups-ppdc cups-server-common libcups2 libcups2-dev libcupsimage2
           Pin: version 2.4.2-3+deb12u9
           Pin-Priority: 1001
           
