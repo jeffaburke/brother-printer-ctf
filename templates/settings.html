@@ -30,8 +30,8 @@
                         <div class="mb-3">
                             <label class="form-label"><strong>SMTP Username:</strong></label>
                             <div class="input-group">
-                                <input type="text" class="form-control" value="{{ smtp_creds.username }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ smtp_creds.username }}')">
+                                <input type="text" class="form-control" value="********" readonly>
+                                <button class="btn btn-outline-secondary" type="button" disabled>
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
@@ -41,11 +41,11 @@
                         <div class="mb-3">
                             <label class="form-label"><strong>SMTP Password:</strong></label>
                             <div class="input-group">
-                                <input type="password" class="form-control" id="smtpPassword" value="{{ smtp_creds.password }}" readonly>
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
+                                <input type="password" class="form-control" value="********" readonly>
+                                <button class="btn btn-outline-secondary" type="button" disabled>
+                                    <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ smtp_creds.password }}')">
+                                <button class="btn btn-outline-secondary" type="button" disabled>
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
@@ -78,6 +78,67 @@
                     <strong>Security Notice:</strong> These credentials are stored in plain text for demonstration purposes. 
                     In a production environment, they should be encrypted.
                 </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-stethoscope"></i> System Diagnostics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Diagnostic Tool:</strong> Use this tool to run system commands for troubleshooting printer issues.
+                </div>
+                
+                <form method="POST" action="{{ url_for('system_diagnostics') }}">
+                    <div class="mb-3">
+                        <label class="form-label">Command to Execute</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="command" placeholder="e.g., whoami, id, ls -la" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-play"></i> Execute
+                            </button>
+                        </div>
+                        <small class="text-muted">Enter a system command to diagnose printer issues</small>
+                    </div>
+                </form>
+                
+                <div class="mt-3">
+                    <h6>Common Diagnostic Commands:</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('whoami')">whoami</button>
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('id')">id</button>
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('pwd')">pwd</button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('ls -la')">ls -la</button>
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('ps aux')">ps aux</button>
+                            <button class="btn btn-outline-secondary btn-sm mb-1" onclick="setCommand('uname -a')">uname -a</button>
+                        </div>
+                    </div>
+                </div>
+
+                {% if diagnostic_result %}
+                <div class="mt-4">
+                    <h6>Command Output:</h6>
+                    <div class="alert alert-light border">
+                        <div class="mb-2">
+                            <strong>Command:</strong> <code>{{ diagnostic_result.command }}</code>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Exit Code:</strong> <span class="badge bg-{{ 'success' if diagnostic_result.exit_code == 0 else 'danger' }}">{{ diagnostic_result.exit_code }}</span>
+                        </div>
+                        <div>
+                            <strong>Output:</strong>
+                            <pre class="mt-2 mb-0" style="background-color: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: auto;">{{ diagnostic_result.output }}</pre>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -306,6 +367,11 @@ function togglePasswordChange() {
         // Clear form fields when hiding
         form.querySelectorAll('input').forEach(input => input.value = '');
     }
+}
+
+function setCommand(command) {
+    const commandInput = document.querySelector('input[name="command"]');
+    commandInput.value = command;
 }
 </script>
 {% endblock %}

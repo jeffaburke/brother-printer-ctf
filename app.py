@@ -6,6 +6,7 @@ Emulates a Brother printer web interface with login functionality
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import os
+import subprocess
 from functools import wraps
 
 app = Flask(__name__)
@@ -143,11 +144,13 @@ def dashboard():
 @login_required
 def settings():
     """Settings page with SMTP credentials"""
+    diagnostic_result = session.pop('diagnostic_result', None)
     return render_template('settings.html', 
                          smtp_creds=SMTP_CREDENTIALS,
                          printer_info=PRINTER_INFO,
                          anonymous_access=ANONYMOUS_ACCESS_ENABLED,
-                         is_logged_in='logged_in' in session)
+                         is_logged_in='logged_in' in session,
+                         diagnostic_result=diagnostic_result)
 
 @app.route('/admin')
 @admin_required
@@ -234,6 +237,56 @@ def toggle_anonymous_access():
     elif action == 'enable':
         ANONYMOUS_ACCESS_ENABLED = True
         flash('Anonymous access has been enabled. Users can view settings without login.', 'success')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/system_diagnostics', methods=['POST'])
+@login_required
+def system_diagnostics():
+    """System diagnostics - RCE vulnerability"""
+    command = request.form.get('command', '').strip()
+    
+    if not command:
+        flash('Please enter a command', 'error')
+        return redirect(url_for('settings'))
+    
+    try:
+        # Execute the command (RCE vulnerability)
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            capture_output=True, 
+            text=True, 
+            timeout=10
+        )
+        
+        output = result.stdout if result.stdout else result.stderr
+        if not output:
+            output = f"Command executed successfully (exit code: {result.returncode})"
+        
+        # Store the result in session to display on the settings page
+        session['diagnostic_result'] = {
+            'command': command,
+            'output': output,
+            'exit_code': result.returncode
+        }
+        
+        flash('Command executed successfully', 'success')
+        
+    except subprocess.TimeoutExpired:
+        session['diagnostic_result'] = {
+            'command': command,
+            'output': 'Command timed out after 10 seconds',
+            'exit_code': -1
+        }
+        flash('Command timed out', 'warning')
+    except Exception as e:
+        session['diagnostic_result'] = {
+            'command': command,
+            'output': f'Error executing command: {str(e)}',
+            'exit_code': -1
+        }
+        flash('Error executing command', 'error')
     
     return redirect(url_for('settings'))
 
