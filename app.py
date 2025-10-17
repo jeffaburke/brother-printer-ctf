@@ -86,9 +86,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         global ANONYMOUS_ACCESS_ENABLED
-        print(f"DEBUG: login_required decorator - ANONYMOUS_ACCESS_ENABLED: {ANONYMOUS_ACCESS_ENABLED}, logged_in: {'logged_in' in session}")
         if not ANONYMOUS_ACCESS_ENABLED and 'logged_in' not in session:
-            print("DEBUG: Redirecting to login")
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -149,7 +147,6 @@ def settings():
     """Settings page with SMTP credentials"""
     global ANONYMOUS_ACCESS_ENABLED
     diagnostic_result = session.pop('diagnostic_result', None)
-    print(f"DEBUG: Settings route - ANONYMOUS_ACCESS_ENABLED: {ANONYMOUS_ACCESS_ENABLED}")
     return render_template('settings.html', 
                          smtp_creds=SMTP_CREDENTIALS,
                          printer_info=PRINTER_INFO,
@@ -157,11 +154,6 @@ def settings():
                          is_logged_in='logged_in' in session,
                          diagnostic_result=diagnostic_result)
 
-@app.route('/admin')
-@admin_required
-def admin():
-    """Admin panel for security controls"""
-    return render_template('admin.html')
 
 @app.route('/printer_status')
 @login_required
@@ -203,13 +195,11 @@ def maintenance():
 @admin_required
 def change_password():
     """Change admin password"""
-    print("DEBUG: change_password route hit!")
     global CURRENT_PASSWORD
     
     current_password = request.form.get('current_password')
     new_password = request.form.get('new_password')
     confirm_password = request.form.get('confirm_password')
-    print(f"DEBUG: Received password change data")
     
     # Validate current password
     if current_password != CURRENT_PASSWORD:
@@ -238,31 +228,22 @@ def toggle_anonymous_access():
     global ANONYMOUS_ACCESS_ENABLED
     
     action = request.form.get('action')
-    print(f"DEBUG: Received action: {action}")
-    print(f"DEBUG: Current ANONYMOUS_ACCESS_ENABLED: {ANONYMOUS_ACCESS_ENABLED}")
-    
     if action == 'disable':
         ANONYMOUS_ACCESS_ENABLED = False
-        print(f"DEBUG: Set ANONYMOUS_ACCESS_ENABLED to False")
         flash('Anonymous access has been disabled. Login required for all pages.', 'success')
     elif action == 'enable':
         ANONYMOUS_ACCESS_ENABLED = True
-        print(f"DEBUG: Set ANONYMOUS_ACCESS_ENABLED to True")
         flash('Anonymous access has been enabled. Users can view settings without login.', 'success')
     else:
-        print(f"DEBUG: Unknown action: {action}")
         flash('Invalid action', 'error')
     
-    print(f"DEBUG: Final ANONYMOUS_ACCESS_ENABLED: {ANONYMOUS_ACCESS_ENABLED}")
     return redirect(url_for('settings'))
 
 @app.route('/system_diagnostics', methods=['POST'])
 @login_required
 def system_diagnostics():
     """System diagnostics - RCE vulnerability"""
-    print("DEBUG: system_diagnostics route hit!")
     command = request.form.get('command', '').strip()
-    print(f"DEBUG: Received command: {command}")
     
     if not command:
         flash('Please enter a command', 'error')

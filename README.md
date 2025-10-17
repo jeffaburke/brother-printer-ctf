@@ -6,7 +6,7 @@ A CTF machine that emulates a Brother printer web portal with intentional securi
 
 This machine simulates a Brother printer web interface with a critical Remote Code Execution (RCE) vulnerability. Participants need to:
 
-1. **Access the settings page** (anonymous access enabled by default)
+1. **Access the settings page** (home page with anonymous access enabled by default)
 2. **Exploit the System Diagnostics tool** to execute arbitrary commands
 3. **Use RCE to discover the flag** hidden in the system
 4. **Optional:** Login with default credentials (1234567:1234567) to access admin functions
@@ -51,7 +51,7 @@ The flag is hidden in the system and can be discovered through RCE exploitation:
 
 5. **Access the portal:**
    - Open your browser to `http://localhost:5000`
-   - Navigate to Settings and use the System Diagnostics tool
+   - You'll land directly on the Settings page with the System Diagnostics tool
    - Execute commands to discover the hidden flag (no login required by default)
    - Optional: Login with credentials: `1234567` / `1234567` for admin access
 
@@ -71,7 +71,7 @@ The flag is hidden in the system and can be discovered through RCE exploitation:
 
 4. **Access the deployed portal:**
    - Navigate to `http://<ctf-box-ip>`
-   - Use the System Diagnostics tool in Settings to exploit RCE
+   - You'll land directly on the Settings page with the System Diagnostics tool
    - Execute commands to discover the hidden flag (no login required by default)
    - Optional: Login for admin access to change settings
 
@@ -87,7 +87,6 @@ brother-printer-ctf/
 │   ├── login.html
 │   ├── dashboard.html
 │   ├── settings.html
-│   ├── admin.html
 │   ├── printer_status.html
 │   ├── scan_settings.html
 │   ├── network_settings.html
@@ -109,9 +108,8 @@ brother-printer-ctf/
 - **Anonymous Access:** View settings without login (configurable)
 - **Login System:** Default credentials authentication with password change capability
 - **Dashboard:** Overview of printer status and quick actions
-- **Settings Page:** System diagnostics tool with RCE vulnerability
+- **Settings Page:** Home page with system diagnostics tool and RCE vulnerability
 - **RCE Vulnerability:** Remote code execution through system diagnostics
-- **Admin Panel:** Security warnings and audit logs
 - **Access Control:** Admin can enable/disable anonymous access
 - **Password Management:** Change admin password functionality
 - **Session Management:** Proper login/logout functionality
@@ -207,9 +205,9 @@ The Ansible playbook automatically installs vulnerable CUPS components for Debia
 ## 🚨 RCE Exploitation Guide
 
 ### Finding the Vulnerability
-1. **Navigate to Settings:** Access the settings page (no login required)
-2. **Locate System Diagnostics:** Find the "System Diagnostics" section
-3. **Identify RCE:** Notice the command execution functionality
+1. **Access Home Page:** Navigate to the root URL (redirects to settings)
+2. **Locate System Diagnostics:** Find the "System Diagnostics" section on the settings page
+3. **Identify RCE:** Notice the command execution functionality (no login required)
 
 ### Exploitation Techniques
 1. **Basic Commands:**
@@ -291,6 +289,8 @@ This CTF machine teaches:
 - **Hidden Flag:** Flag is no longer visible in SMTP credentials, must be discovered via RCE
 - **Anonymous RCE Access:** RCE vulnerability accessible without authentication
 - **System Diagnostics:** Professional-looking diagnostic tool that executes arbitrary commands
+- **Settings as Home Page:** Direct access to RCE vulnerability from root URL
+- **Simplified Interface:** Removed confusing admin section, consolidated functionality
 - **Enhanced CTF Challenge:** More realistic and challenging exploitation scenario
 
 ### Version 2.0 Features
@@ -304,6 +304,8 @@ This CTF machine teaches:
 ### Migration Notes
 - **Critical Change:** Flag is now hidden and requires RCE exploitation to discover
 - **Default Behavior:** Anonymous access is enabled by default, including RCE vulnerability
+- **Home Page:** Root URL now redirects directly to settings page with RCE vulnerability
+- **Simplified Interface:** Removed admin section to reduce confusion
 - **CTF Impact:** More challenging - participants must exploit RCE to find the flag
 - **Admin Functions:** Password changes and access control require authentication
 - **CUPS Support:** Full printing system available after deployment
