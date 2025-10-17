@@ -1,319 +1,60 @@
 ---
+# Brother Printer CTF Portal Deployment
+# This playbook deploys a vulnerable Brother printer web interface for CTF purposes
 - name: Deploy Brother Printer CTF Portal
   hosts: all
   become: yes
-  # Define variables for easy custom use when final deployment is done
+  
+  # Configuration variables
   vars:
     app_name: "brother-printer-ctf"
     app_user: "www-data"
     app_dir: "/var/www/{{ app_name }}"
     git_repo: "https://github.com/jeffaburke/brother-printer-ctf.git"
     
-  tasks: # Update the package cache so there are no errors when trying to install packages
+  tasks:
+    # Update package cache to ensure latest package information
     - name: Update package cache
       apt:
         update_cache: yes
         cache_valid_time: 3600
 
-    - name: Install required packages
+    # Install core system packages
+    - name: Install system packages
       apt:
         name:
-          - python3
-          - python3-pip
-          - python3-venv
-          - python3-dev
-          - apache2
-          - libapache2-mod-wsgi-py3
-          - git
-          - ufw
-          - build-essential
-          - wget
-          - curl
-          - dpkg-dev
-          - debhelper
-          - devscripts
+          - python3                    # Python runtime
+          - python3-pip               # Python package manager
+          - python3-venv              # Python virtual environments
+          - python3-dev               # Python development headers
+          - apache2                   # Web server
+          - libapache2-mod-wsgi-py3   # Apache WSGI module for Python
+          - git                       # Version control
+          - ufw                       # Firewall
+          - cups                      # Print server (includes all CUPS components)
+          - printer-driver-all        # Additional printer drivers
+          - cups-pdf                  # Virtual PDF printer
         state: present
 
-    - name: Remove conflicting system CUPS components
-      apt:
-        name:
-          - libcupsfilters1
-          - libcupsfilters-dev
-          - libppd2
-          - libppd-dev
-          - cups-filters
-          - cups-browsed
-        state: absent
-        purge: yes
-
-    - name: Install CUPS development libraries only (no system libcupsfilters)
-      apt:
-        name:
-          - libcups2-dev=2.4.2-3+deb12u9
-          - libcupsimage2=2.4.2-3+deb12u9
-          - printer-driver-all
-          - cups-pdf
-        state: present
-        allow_downgrade: yes
-        force: yes
-
-    - name: Enable source repositories for build dependencies
-      shell: |
-        if ! grep -q "deb-src.*bookworm" /etc/apt/sources.list; then
-          echo "deb-src http://deb.debian.org/debian bookworm main" >> /etc/apt/sources.list
-          echo "deb-src http://deb.debian.org/debian bookworm-updates main" >> /etc/apt/sources.list
-          echo "deb-src http://security.debian.org/debian-security bookworm-security main" >> /etc/apt/sources.list
-        fi
-
-    - name: Update package cache after adding source repositories
-      apt:
-        update_cache: yes
-
-    - name: Check available source packages
-      shell: |
-        apt-cache search --names-only "^libcupsfilters" | head -5
-        apt-cache search --names-only "^libppd" | head -5
-        apt-cache search --names-only "^cups-filters" | head -5
-        apt-cache search --names-only "^cups-browsed" | head -5
-      register: available_packages
-
-    - name: Display available packages
-      debug:
-        var: available_packages.stdout_lines
-
-    - name: Install build dependencies for available CUPS components
-      shell: |
-        apt build-dep -y cups-filters cups-browsed || true
-        apt build-dep -y libcupsfilters1 || true
-        apt build-dep -y libppd2 || true
-
-    - name: Install additional build tools
-      apt:
-        name:
-          - build-essential
-          - autoconf
-          - automake
-          - libtool
-          - pkg-config
-          - git
-          - wget
-        state: present
-
-    - name: Create build dir for vulnerable CUPS components
-      file:
-        path: /usr/local/src/cups-build
-        state: directory
-        mode: '0755'
-
-    - name: Download libcupsfilters tarball
-      get_url:
-        url: "https://github.com/OpenPrinting/libcupsfilters/archive/refs/tags/2.0.0.tar.gz"
-        dest: /usr/local/src/cups-build/libcupsfilters.tar.gz
-        mode: '0644'
-
-    - name: Extract libcupsfilters
-      unarchive:
-        src: /usr/local/src/cups-build/libcupsfilters.tar.gz
-        dest: /usr/local/src/cups-build
-        remote_src: yes
-
-    - name: Build and install libcupsfilters
-      shell: |
-        set -e
-        cd /usr/local/src/cups-build/libcupsfilters-*
-        ./autogen.sh || true
-        ./configure --prefix=/usr
-        make -j"$(nproc)"
-        make install
-
-    - name: Download libppd tarball
-      get_url:
-        url: "https://github.com/OpenPrinting/libppd/releases/download/2.1.0/libppd-2.1.0.tar.xz"
-        dest: /usr/local/src/cups-build/libppd.tar.xz
-        mode: '0644'
-
-    - name: Extract libppd
-      unarchive:
-        src: /usr/local/src/cups-build/libppd.tar.xz
-        dest: /usr/local/src/cups-build
-        remote_src: yes
-
-    - name: Build and install libppd
-      shell: |
-        set -e
-        cd /usr/local/src/cups-build/libppd-*
-        ./autogen.sh || true
-        ./configure --prefix=/usr
-        make -j"$(nproc)"
-        make install
-
-    - name: Download cups-filters tarball
-      get_url:
-        url: "https://github.com/OpenPrinting/cups-filters/releases/download/2.0.1/cups-filters-2.0.1.tar.xz"
-        dest: /usr/local/src/cups-build/cups-filters.tar.xz
-        mode: '0644'
-
-    - name: Extract cups-filters
-      unarchive:
-        src: /usr/local/src/cups-build/cups-filters.tar.xz
-        dest: /usr/local/src/cups-build
-        remote_src: yes
-
-    - name: Debug libcupsfilters version and symbols
-      shell: |
-        echo "=== Checking libcupsfilters version ==="
-        pkg-config --modversion libcupsfilters || echo "libcupsfilters not found in pkg-config"
-        echo "=== Checking PKG_CONFIG_PATH ==="
-        echo "PKG_CONFIG_PATH: $PKG_CONFIG_PATH"
-        echo "=== Checking which libcupsfilters pkg-config is using ==="
-        pkg-config --variable=prefix libcupsfilters || echo "No prefix found"
-        pkg-config --variable=libdir libcupsfilters || echo "No libdir found"
-        echo "=== Checking installed libcupsfilters libraries ==="
-        find /usr/lib* -name "*cupsfilters*" -type f 2>/dev/null || echo "No libcupsfilters libraries found"
-        echo "=== Checking for cfIEEE1284GetDeviceID symbol in each library ==="
-        for lib in /usr/lib*/libcupsfilters.so*; do
-          echo "Checking $lib:"
-          nm -D "$lib" 2>/dev/null | grep cfIEEE1284GetDeviceID || echo "  Not found in $lib"
-        done
-        echo "=== Checking libcupsfilters headers ==="
-        find /usr/include -name "*cupsfilters*" -type f 2>/dev/null || echo "No libcupsfilters headers found"
-        echo "=== Checking ldconfig cache ==="
-        ldconfig -p | grep cupsfilters || echo "No cupsfilters in ldconfig cache"
-      register: debug_output
-
-    - name: Display debug information
-      debug:
-        var: debug_output.stdout_lines
-
-    - name: Build and install cups-filters
-      shell: |
-        set -e
-        cd /usr/local/src/cups-build/cups-filters-*
-        ./autogen.sh || true
-        ./configure --prefix=/usr
-        make -j"$(nproc)"
-        make install
-
-    - name: Download cups-browsed tarball
-      get_url:
-        url: "https://github.com/OpenPrinting/cups-browsed/archive/refs/tags/2.0.1.tar.gz"
-        dest: /usr/local/src/cups-build/cups-browsed.tar.gz
-        mode: '0644'
-
-    - name: Extract cups-browsed
-      unarchive:
-        src: /usr/local/src/cups-build/cups-browsed.tar.gz
-        dest: /usr/local/src/cups-build
-        remote_src: yes
-
-    - name: Build and install cups-browsed
-      shell: |
-        set -e
-        cd /usr/local/src/cups-build/cups-browsed-*
-        ./autogen.sh || true
-        ./configure --prefix=/usr
-        make -j"$(nproc)"
-        make install
-
-    - name: Pin vulnerable CUPS packages to prevent updates
-      copy:
-        content: |
-          Package: cups cups-client cups-daemon cups-common cups-core-drivers cups-ipp-utils cups-ppdc cups-server-common libcups2 libcups2-dev libcupsimage2
-          Pin: version 2.4.2-3+deb12u9
-          Pin-Priority: 1001
-          
-          Package: cups-browsed libcupsfilters libppd cups-filters
-          Pin: release *
-          Pin-Priority: 1001
-        dest: /etc/apt/preferences.d/cups-vulnerable
-        mode: '0644'
-
-    - name: Install CUPS server components after building vulnerable libraries
-      apt:
-        name:
-          - cups=2.4.2-3+deb12u9
-          - cups-client=2.4.2-3+deb12u9
-          - cups-daemon=2.4.2-3+deb12u9
-          - cups-common=2.4.2-3+deb12u9
-          - cups-core-drivers=2.4.2-3+deb12u9
-          - cups-ipp-utils=2.4.2-3+deb12u9
-          - cups-ppdc=2.4.2-3+deb12u9
-          - cups-server-common=2.4.2-3+deb12u9
-          - libcups2=2.4.2-3+deb12u9
-        state: present
-        allow_downgrade: yes
-        force: yes
-
+    # Start CUPS print server
     - name: Enable and start CUPS service
       systemd:
         name: cups
         state: started
         enabled: yes
 
-    - name: Enable and start cups-browsed service (vulnerable version)
-      systemd:
-        name: cups-browsed
-        state: started
-        enabled: yes
-        daemon_reload: yes
-      ignore_errors: yes
-
-    - name: Verify vulnerable CUPS components are running
-      shell: |
-        echo "=== CUPS Version ==="
-        cups-config --version || echo "cups-config not found"
-        echo "=== Library Versions ==="
-        pkg-config --modversion libcupsfilters || echo "libcupsfilters not found in pkg-config"
-        pkg-config --modversion libppd || echo "libppd not found in pkg-config"
-        echo "=== Installed Packages ==="
-        dpkg -l | grep -E "(cups|libcupsfilters|libppd)" || echo "No matching packages found"
-        echo "=== Library Files ==="
-        find /usr/lib* -name "*cupsfilters*" -o -name "*libppd*" 2>/dev/null || echo "No library files found"
-        echo "=== Running Processes ==="
-        ps aux | grep -E "(cupsd|cups-browsed)" | grep -v grep || echo "No CUPS processes running"
-        echo "=== Library Dependencies ==="
-        if [ -f /usr/sbin/cupsd ]; then
-          echo "CUPS daemon dependencies:"
-          ldd /usr/sbin/cupsd | grep -E "(cupsfilters|libppd)" || echo "No vulnerable libraries linked"
-        fi
-        if [ -f /usr/sbin/cups-browsed ]; then
-          echo "cups-browsed dependencies:"
-          ldd /usr/sbin/cups-browsed | grep -E "(cupsfilters|libppd)" || echo "No vulnerable libraries linked"
-        fi
-      register: version_check
-
-    - name: Display version verification results
-      debug:
-        var: version_check.stdout_lines
-
-    - name: Fix library path conflicts
-      shell: |
-        # Remove system library versions completely
-        rm -f /usr/lib/x86_64-linux-gnu/libcupsfilters.so*
-        rm -f /usr/lib/x86_64-linux-gnu/libppd.so*
-        rm -f /usr/lib/x86_64-linux-gnu/pkgconfig/libcupsfilters.pc
-        rm -f /usr/lib/x86_64-linux-gnu/pkgconfig/libppd.pc
-        
-        # Update ldconfig to use our libraries
-        ldconfig
-        
-        # Remove conflicting packages completely
-        apt-get remove --purge -y libcupsfilters1 cups-filters || true
-        
-        # Restart CUPS services to use our libraries
-        systemctl restart cups
-        systemctl restart cups-browsed
-
-    - name: Enable Apache modules # Install the necessary Apache modules like WSGI so Apache can understand the python application
+    # Configure Apache web server
+    - name: Enable Apache modules
       apache2_module:
         name: "{{ item }}"
         state: present
       loop:
-        - rewrite
-        - wsgi
-        - headers
+        - rewrite    # URL rewriting for clean URLs
+        - wsgi       # Python WSGI support (auto-installed with apache2)
+        - headers    # HTTP header manipulation
 
-    - name: Create application directory # Create the directory for the application with www-data as the owner
+    # Application deployment
+    - name: Create application directory
       file:
         path: "{{ app_dir }}"
         state: directory
@@ -321,19 +62,20 @@
         group: "{{ app_user }}"
         mode: '0755'
 
-    - name: Mark repo path as safe for git # This is needed so git can pull the repository as the root user
+    - name: Configure git for safe directory access
       git_config:
         name: "safe.directory"
         value: "{{ app_dir }}"
 
-    - name: Clone repository
+    - name: Clone application repository
       git:
         repo: "{{ git_repo }}"
         dest: "{{ app_dir }}"
         version: rce
         force: yes
 
-    - name: Ensure requirements.txt exists # Check if the requirements.txt file exists if not next step will fail. Should be pulled from the repo
+    # Python environment setup
+    - name: Verify requirements.txt exists
       stat:
         path: "{{ app_dir }}/requirements.txt"
       register: requirements_file
@@ -343,7 +85,7 @@
         msg: "requirements.txt not found in repository at {{ app_dir }}"
       when: not requirements_file.stat.exists
 
-    - name: Create virtual environment for application # Create the virtual environment for the application so everything is self-contained and we don't have to worry about getting system python packages.
+    - name: Create Python virtual environment
       command: "python3 -m venv {{ app_dir }}/venv"
       args:
         creates: "{{ app_dir }}/venv"
@@ -354,7 +96,8 @@
         virtualenv: "{{ app_dir }}/venv"
         virtualenv_python: python3
 
-    - name: Copy WSGI entry point from repository # Copy the WSGI entry point from the repository to the application directory
+    # Apache configuration
+    - name: Copy WSGI entry point
       copy:
         src: "{{ app_dir }}/wsgi-entry.py"
         dest: "{{ app_dir }}/{{ app_name }}.wsgi"
@@ -363,7 +106,7 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Copy Apache configuration from repository # Copy the Apache configuration from the repository to the application directory
+    - name: Copy Apache site configuration
       copy:
         src: "{{ app_dir }}/apache-config.conf"
         dest: "/etc/apache2/sites-available/{{ app_name }}.conf"
@@ -372,23 +115,24 @@
         mode: '0644'
         remote_src: yes
 
-    - name: Enable the new site # Enable the new site so Apache can use it vs the default
+    - name: Enable new Apache site
       command: a2ensite {{ app_name }}.conf
       args:
         creates: "/etc/apache2/sites-enabled/{{ app_name }}.conf"
 
-    - name: Disable default Apache site # Disable the default site so Apache can use the new one and not serve the default page.
+    - name: Disable default Apache site
       command: a2dissite 000-default.conf
       args:
         removes: "/etc/apache2/sites-enabled/000-default.conf"
 
-    - name: Restart and enable Apache # Restart and enable Apache so it can use the new site and not the default one.
+    - name: Restart and enable Apache
       systemd:
         name: apache2
         state: restarted
         enabled: yes
 
-    - name: Enable UFW firewall # Enable the UFW firewall so we can block all traffic except SSH and HTTP. This will help simplify the attack and defense surface.
+    # Firewall configuration
+    - name: Enable UFW firewall
       ufw:
         state: enabled
         policy: deny
@@ -405,14 +149,15 @@
         port: "80"
         proto: tcp
 
-    - name: Set proper ownership of application directory # Set the ownership of the application directory to the www-data user so the application can write to it.
+    # Final configuration
+    - name: Set application directory ownership
       file:
         path: "{{ app_dir }}"
         owner: "{{ app_user }}"
         group: "{{ app_user }}"
         recurse: yes
 
-    - name: Validate Apache configuration # Validate the Apache configuration so we can make sure it's correct. This is sort of a last check to make sure everything is working as expected.
+    - name: Validate Apache configuration
       command: apache2ctl configtest
       register: apache_config_test
       changed_when: false
@@ -423,12 +168,13 @@
         port: 80
         timeout: 30
 
-    - name: Display deployment information # Display the deployment information so we can see what's been deployed.
+    # Deployment completion
+    - name: Display deployment information
       debug:
         msg: |
           Brother Printer CTF Portal has been deployed!
           Access URL: http://{{ ansible_default_ipv4.address }}
           Application Directory: {{ app_dir }}
-          Default Credentials: 1234567 / 1234567\
+          Default Credentials: 1234567 / 1234567
           
           The application is ready to use!
