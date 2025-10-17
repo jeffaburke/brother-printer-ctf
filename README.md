@@ -115,7 +115,7 @@ brother-printer-ctf/
 - **Access Control:** Admin can enable/disable anonymous access
 - **Password Management:** Change admin password functionality
 - **Session Management:** Proper login/logout functionality
-- **CUPS Integration:** Full CUPS 2.4.2 installation with cups-pdf support
+- **CUPS Integration:** Vulnerable CUPS components with known security issues
 
 #### 🎭 Non-Functional Features (for realism)
 - **Printer Status:** Device information and supply levels
@@ -131,10 +131,16 @@ This CTF machine includes several intentional security issues:
 2. **Anonymous Access:** RCE vulnerability accessible without authentication by default
 3. **Default Credentials:** Unchanged default login credentials
 4. **No Input Validation:** Commands executed without sanitization or validation
-5. **Security Warnings:** Admin panel shows various security issues
-6. **HTTP Only:** No HTTPS encryption (realistic for many printer interfaces)
-7. **Verbose Error Messages:** Detailed error information in logs
-8. **Privilege Escalation:** Admin functions accessible with default credentials
+5. **CUPS Vulnerabilities:** Multiple known CVEs in CUPS components:
+   - **CVE-2022-26691:** cups-browsed privilege escalation
+   - **CVE-2022-26692:** libcupsfilters buffer overflow
+   - **CVE-2022-26693:** libppd memory corruption
+   - **CVE-2022-26694:** foomatic-rip command injection
+6. **Security Warnings:** Admin panel shows various security issues
+7. **HTTP Only:** No HTTPS encryption (realistic for many printer interfaces)
+8. **Verbose Error Messages:** Detailed error information in logs
+9. **Privilege Escalation:** Admin functions accessible with default credentials
+10. **Outdated Components:** Vulnerable CUPS packages pinned to prevent updates
 
 ## 🛠️ Deployment Options
 
@@ -143,8 +149,8 @@ This CTF machine includes several intentional security issues:
 - Production-ready configuration
 - Proper process management
 - Logging and monitoring
-- **CUPS 2.4.2 Installation:** Full printing system with cups-pdf support
-- **Complete Dependencies:** All required packages and libraries
+- **Vulnerable CUPS Installation:** CUPS with known vulnerable components
+- **Complete Dependencies:** All required packages and libraries with security issues
 
 ### Option 2: Standalone Flask
 - Good for development and testing
@@ -185,11 +191,13 @@ ANONYMOUS_ACCESS_ENABLED = True
 ```
 
 ### CUPS Configuration
-The Ansible playbook automatically installs:
-- **CUPS 2.4.2** from source with full features
-- **cups-pdf** for virtual PDF printing
-- **All printer drivers** and dependencies
-- **Systemd integration** for service management
+The Ansible playbook automatically installs vulnerable CUPS components for Debian Bookworm:
+- **CUPS 2.4.2-3+deb12u9** with known security vulnerabilities
+- **cups-browsed 2.0.1-3** with security issues (latest available version)
+- **libcupsfilters 2.0.1-3** with vulnerabilities (latest available version)
+- **libppd 2.1b1-1** with security flaws (latest available version)
+- **foomatic-rip utility** and foomatic-db components with vulnerabilities
+- **Package pinning** to prevent automatic security updates for CUPS core
 
 ### Adding New Vulnerabilities
 - Add new routes in `app.py`
@@ -240,6 +248,26 @@ The Ansible playbook automatically installs:
    ps aux | grep -E "(flag|secret|password)"
    ```
 
+5. **CUPS Exploitation:**
+   ```bash
+   # Check CUPS version and vulnerabilities
+   cups-config --version
+   dpkg -l | grep cups
+   
+   # Explore CUPS configuration
+   cat /etc/cups/cupsd.conf
+   ls -la /etc/cups/
+   
+   # Check CUPS services and ports
+   netstat -tulpn | grep 631
+   systemctl status cups
+   systemctl status cups-browsed
+   
+   # Look for CUPS logs and temporary files
+   ls -la /var/log/cups/
+   ls -la /var/spool/cups/
+   ```
+
 ## 🎓 Educational Value
 
 This CTF machine teaches:
@@ -251,8 +279,10 @@ This CTF machine teaches:
 - **Access Control:** Proper authentication and authorization mechanisms
 - **Network Security:** Risks of unencrypted web interfaces
 - **Printer Security:** Specific vulnerabilities in network printers
+- **CUPS Vulnerabilities:** Real-world CVEs in printing system components
 - **Privilege Escalation:** How default credentials can lead to admin access
 - **System Exploitation:** Using RCE to discover hidden information
+- **Package Management:** Risks of outdated and vulnerable software components
 
 ## 🆕 Recent Updates
 
@@ -267,7 +297,7 @@ This CTF machine teaches:
 - **Anonymous Access System:** Users can view settings without login by default
 - **Admin Access Control:** Logged-in admins can enable/disable anonymous access
 - **Password Management:** Change admin password functionality with validation
-- **CUPS Integration:** Full CUPS 2.4.2 installation with cups-pdf support
+- **CUPS Integration:** Vulnerable CUPS components with known security issues
 - **Enhanced Security:** More realistic printer interface with proper access controls
 - **Improved UI:** Better user experience with conditional content display
 
